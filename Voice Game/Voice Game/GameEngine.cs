@@ -73,8 +73,22 @@ namespace Voice_Game
                     if (angle > 90)
                         angle = 0;
 
+                    // Perform the angle and stretch interpolations
+                    double fraction = (Frequency - presenter.Settings.PitchMinimum) / (presenter.Settings.PitchMaximum - presenter.Settings.PitchMinimum);
+                    angle = fraction * (presenter.Settings.AngleMaximum - presenter.Settings.AngleMinimum) + presenter.Settings.AngleMinimum;
+                    if (angle > 90)
+                        angle = 0;
+
+                    fraction = (Decibels - presenter.Settings.VolumeMinimum) / (presenter.Settings.VolumeMaximum - presenter.Settings.VolumeMinimum);
+                    stretch = fraction * (presenter.Settings.StretchMaximum - presenter.Settings.StretchMinimum) + presenter.Settings.StretchMinimum;
+                    if (stretch < 0)
+                        stretch = 0;
+
                     // Update the pitch and volume data
-                    presenter.Frequency = Frequency;
+                    if (Decibels > presenter.Settings.VolumeMinimum)
+                        presenter.Frequency = Frequency;
+                    else
+                        presenter.Frequency = 0;
                     presenter.Decibels = Decibels;
 
                     presenter.IsAnchorVisible = true;
@@ -94,10 +108,10 @@ namespace Voice_Game
                 if (mode == GameMode.InFlight)
                 {
                     presenter.IsAnchorVisible = false;
-                    velocity.Y += (-0.01);
+                    velocity.Y += presenter.Settings.Gravity;
                     ball = ball + (dt * velocity);
 
-                    if (ball.X > 700 || ball.X < 0 || ball.Y > 5000 || ball.Y < 0)
+                    if (ball.X > 700 || ball.X < 0 || ball.Y > 5000 || ball.Y < 20)
                     {
                         mode = GameMode.Aiming;
                     }

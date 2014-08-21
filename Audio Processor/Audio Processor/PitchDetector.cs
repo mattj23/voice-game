@@ -158,16 +158,25 @@ namespace Audio_Processor
         /// <returns></returns>
         public double GetPeak()
         {
+            // Find the highest intensity
             double maxIntensity = 0;
+            for (int n = 0; n < intensities.Count(); ++n)
+                if (intensities[n] > maxIntensity)
+                    maxIntensity = intensities[n];
+
+            // Now find the first bin with an intensity higher than 90% of the 
+            // maximum intensity
+            double checkIntensity = 0.9 * maxIntensity;
             int maxIntensityBin = 0;
             for (int n = 0; n < intensities.Count(); ++n)
             {
-                if (intensities[n] > maxIntensity)
+                if (intensities[n] > checkIntensity)
                 {
-                    maxIntensity = intensities[n];
                     maxIntensityBin = n;
+                    break;
                 }
             }
+
 
             return maxIntensityBin * binSpacing + startFrequency;
         }

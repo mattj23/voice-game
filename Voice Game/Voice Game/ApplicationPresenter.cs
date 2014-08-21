@@ -89,7 +89,17 @@ namespace Voice_Game
         }
         
         // Settings object
-        public Settings settings;
+        private Settings _settings;
+
+        public Settings Settings
+        {
+            get { return _settings; }
+            set
+            {
+                _settings = value;
+                OnPropertyChanged("Settings");
+            }
+        }
 
         public ApplicationPresenter(MainWindow view)
         {
@@ -97,13 +107,13 @@ namespace Voice_Game
 
             // Load the settings
             string settingsFile = "settings.xml";
-            settings = new Settings();
+            Settings = new Settings();
             if (!File.Exists(settingsFile))
             {
-                settings.SetDefaults();
-                Settings.Serialize(settingsFile, settings);
+                Settings.SetDefaults();
+                Settings.Serialize(settingsFile, Settings);
             }
-            settings = Settings.Deserialize(settingsFile);
+            Settings = Settings.Deserialize(settingsFile);
 
 
 

@@ -9,17 +9,107 @@ using System.IO;
 namespace Voice_Game
 {
     [Serializable]
-    public class Settings
+    public class Settings : Notifier
     {
-        public double PitchMinimum;
-        public double PitchMaximum;
-        public double AngleMinimum;
-        public double AngleMaximum;
+        private double _pitchMinimum;
+        private double _pitchMaximum;
+        private double _angleMinimum;
+        private double _angleMaximum;
+        private double _volumeMinimum;
+        private double _volumeMaximum;
+        private double _stretchMaximum;
+        private double _stretchMinimum;
+        private double _gravity;
 
-        public double VolumeMinimum;
-        public double VolumeMaximum;
-        public double StretchMaximum;
-        public double StretchMinimum;
+        public double Gravity
+        {
+            get { return _gravity; }
+            set
+            {
+                _gravity = value;
+                OnPropertyChanged("Gravity");
+            }
+        }
+
+        public double PitchMinimum
+        {
+            get { return _pitchMinimum; }
+            set
+            {
+                _pitchMinimum = value;
+                OnPropertyChanged("PitchMinimum");
+            }
+        }
+
+        public double PitchMaximum
+        {
+            get { return _pitchMaximum; }
+            set
+            {
+                _pitchMaximum = value;
+                OnPropertyChanged("PitchMaximum");
+            }
+        }
+
+        public double AngleMinimum
+        {
+            get { return _angleMinimum; }
+            set
+            {
+                _angleMinimum = value;
+                OnPropertyChanged("AngleMinimum");
+            }
+        }
+
+        public double AngleMaximum
+        {
+            get { return _angleMaximum; }
+            set
+            {
+                _angleMaximum = value;
+                OnPropertyChanged("AngleMaximum");
+            }
+        }
+
+        public double VolumeMinimum
+        {
+            get { return _volumeMinimum; }
+            set
+            {
+                _volumeMinimum = value;
+                OnPropertyChanged("VolumeMinimum");
+            }
+        }
+
+        public double VolumeMaximum
+        {
+            get { return _volumeMaximum; }
+            set
+            {
+                _volumeMaximum = value;
+                OnPropertyChanged("VolumeMaximum");
+            }
+        }
+
+        public double StretchMaximum
+        {
+            get { return _stretchMaximum; }
+            set
+            {
+                _stretchMaximum = value;
+                OnPropertyChanged("StretchMaximum");
+            }
+        }
+
+        public double StretchMinimum
+        {
+            get { return _stretchMinimum; }
+            set
+            {
+                _stretchMinimum = value;
+                OnPropertyChanged("StretchMinimum");
+            }
+        }
 
         public void SetDefaults()
         {
@@ -31,6 +121,7 @@ namespace Voice_Game
             this.StretchMinimum = 0;
             this.VolumeMinimum = -30;
             this.VolumeMaximum = 0;
+            this.Gravity = -0.01;
         }
 
         public static void Serialize(string filename, Settings s)
