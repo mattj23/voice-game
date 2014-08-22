@@ -20,6 +20,44 @@ namespace Voice_Game
         private double _stretchMaximum;
         private double _stretchMinimum;
         private double _gravity;
+        private double _targetDiameter;
+        private double _targetX;
+        private double _targetY;
+
+        public double TargetShift
+        {
+            get { return - _targetDiameter / 2.0; }
+        }
+
+        public double TargetDiameter
+        {
+            get { return _targetDiameter; }
+            set
+            {
+                _targetDiameter = value;
+                OnPropertyChanged("TargetDiameter");
+                OnPropertyChanged("TargetShift");
+            }
+        }
+        public double TargetX
+        {
+            get { return _targetX; }
+            set
+            {
+                _targetX = value;
+                OnPropertyChanged("TargetX");
+            }
+        }
+        public double TargetY
+        {
+            get { return _targetY; }
+            set
+            {
+                _targetY = value;
+                OnPropertyChanged("TargetY");
+            }
+        }
+
 
         public double Gravity
         {
@@ -122,6 +160,9 @@ namespace Voice_Game
             this.VolumeMinimum = -30;
             this.VolumeMaximum = 0;
             this.Gravity = -0.01;
+            this.TargetX = 600;
+            this.TargetY = 150;
+            this.TargetDiameter = 30;
         }
 
         public static void Serialize(string filename, Settings s)

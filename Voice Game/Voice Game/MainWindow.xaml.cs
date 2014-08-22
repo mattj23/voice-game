@@ -34,7 +34,15 @@ namespace Voice_Game
         {
             if (e.Key == Key.Space)
             {
-                presenter.engine.TriggerLaunch();
+                presenter.engine.StartAiming();
+            }
+        }
+
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Space)
+            {
+                //presenter.engine.TriggerLaunch();
             }
         }
     }
