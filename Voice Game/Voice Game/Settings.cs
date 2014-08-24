@@ -21,8 +21,42 @@ namespace Voice_Game
         private double _stretchMinimum;
         private double _gravity;
         private double _targetDiameter;
+        private double _targetValidDiameter;
         private double _targetX;
         private double _targetY;
+
+        private double _volumeSpan;
+        private double _pitchSpan;
+
+        public double TargetValidDiameter
+        {
+            get { return _targetValidDiameter; }
+            set
+            {
+                _targetValidDiameter = value;
+                OnPropertyChanged("TargetValidDiameter");
+            }
+        }
+
+        public double VolumeSpan
+        {
+            get { return _volumeSpan; }
+            set
+            {
+                _volumeSpan = value;
+                OnPropertyChanged("VolumeSpan");
+            }
+        }
+
+        public double PitchSpan
+        {
+            get { return _pitchSpan; }
+            set
+            {
+                _pitchSpan = value;
+                OnPropertyChanged("PitchSpan");
+            }
+        }
 
         public double TargetShift
         {
@@ -163,6 +197,9 @@ namespace Voice_Game
             this.TargetX = 600;
             this.TargetY = 150;
             this.TargetDiameter = 30;
+            this.PitchSpan = 200;
+            this.VolumeSpan = 20;
+
         }
 
         public static void Serialize(string filename, Settings s)

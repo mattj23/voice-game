@@ -7,6 +7,8 @@ using System.Threading;
 using System.IO;
 using System.Windows;
 
+using Newtonsoft.Json;
+
 namespace Voice_Game
 {
     public class ApplicationPresenter : Notifier
@@ -106,14 +108,16 @@ namespace Voice_Game
             View = view;
 
             // Load the settings
-            string settingsFile = "settings.xml";
+            string settingsFile = "settings.json";
             Settings = new Settings();
             if (!File.Exists(settingsFile))
             {
                 Settings.SetDefaults();
-                Settings.Serialize(settingsFile, Settings);
+                string contents = JsonConvert.SerializeObject(Settings, Formatting.Indented);
+                File.WriteAllText(settingsFile, contents);
             }
-            Settings = Settings.Deserialize(settingsFile);
+            Settings = JsonConvert.DeserializeObject<Settings>(File.ReadAllText(settingsFile));
+            //Settings = Settings.Deserialize(settingsFile);
 
 
 

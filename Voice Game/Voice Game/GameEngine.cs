@@ -39,7 +39,7 @@ namespace Voice_Game
         
         // Pitch Reference
         double pitchReference = 0;
-        double pitchRange = 200;
+        double volumeReference = 0;
 
         // Voice trace
         List<Tuple<long, double, double>> trace = new List<Tuple<long, double, double>>();
@@ -61,18 +61,28 @@ namespace Voice_Game
 
         private double GetAngle(double frequency)
         {
-            // Perform the angle and stretch interpolations
-            double fraction = (frequency - pitchReference) / pitchRange;
-            return fraction * 45 + 45;
+            // The given frequency is turned into a fraction which will range from -1 to +1 based 
+            // on the PitchSpan setting parameter.
+            double fraction = (frequency - pitchReference) / presenter.Settings.PitchSpan;
+            if (fraction < -1) fraction = -1;
+            if (fraction > 1) fraction = 1;
+
+            // Now the fraction is turned into an angle based on even interplation between the setting
+            // parameters for AngleMaximum and AngleMinimum
+            return fraction * (presenter.Settings.AngleMaximum - presenter.Settings.AngleMinimum) + (presenter.Settings.AngleMaximum + presenter.Settings.AngleMinimum) / 2.0;
         }
 
         private double GetStretch(double volume)
         {
-            double fraction = (volume - presenter.Settings.VolumeMinimum) / (presenter.Settings.VolumeMaximum - presenter.Settings.VolumeMinimum);
-            stretch = fraction * (presenter.Settings.StretchMaximum - presenter.Settings.StretchMinimum) + presenter.Settings.StretchMinimum;
-            if (stretch < 0)
-                stretch = 0;
-            return stretch;
+            // The given volume is turned into a fraction which will range from 0 to 1 based on the 
+            // VolumeSpan setting parameter
+            double fraction = (volume - volumeReference) / presenter.Settings.VolumeSpan;
+            if (fraction < 0) fraction = 0;
+            if (fraction > 1) fraction = 1;
+
+            // Now the fraction is turned into a stretch value based on an even interpolation between
+            // StretchMinimum and StretchMaximum
+            return fraction * (presenter.Settings.StretchMaximum - presenter.Settings.StretchMinimum) + presenter.Settings.StretchMinimum;
         }
 
         private void GameLoop()
@@ -82,7 +92,9 @@ namespace Voice_Game
             System.Diagnostics.Stopwatch traceClock = new System.Diagnostics.Stopwatch();
             clock.Start();
 
+            // Prepare the target and ball last-position vectors
             Vector target = new Vector(presenter.Settings.TargetX, presenter.Settings.TargetY, 0);
+            Vector lastBall = new Vector();
 
             while (isRunning)
             {
@@ -105,6 +117,7 @@ namespace Voice_Game
                         startAiming = false;
                         mode = GameMode.Aiming;
                         pitchReference = Frequency;
+                        volumeReference = Decibels;
                         trace = new List<Tuple<long, double, double>>();
                         traceClock.Reset();
                         traceClock.Start();
@@ -141,8 +154,12 @@ namespace Voice_Game
                     // Store the trace
                     trace.Add(new Tuple<long,double,double>(traceClock.ElapsedMilliseconds, Frequency, Decibels));
 
+                    // Make sure the anchor and stretching band are visible
                     presenter.IsAnchorVisible = true;
 
+                    // When the given condition is achieved to trigger the launch of the projectile,
+                    // the triggerLaunch flag is set. To ensure that this state lasts for only part of
+                    // a single frame, the flag is immediately unset and the game mode changes.
                     if (triggerLaunch)
                     {
                         triggerLaunch = false;
@@ -158,6 +175,9 @@ namespace Voice_Game
                         // Prepare the initial velocity
                         velocity = stretch * new Vector(1, 0, 0);
                         velocity = velocity.RotateAboutZ(angle * Math.PI / 180.0);
+
+                        // Set the last position for the ball to be equal to the current position
+                        lastBall = ball.Clone();
                     }
                 }
 
@@ -173,11 +193,43 @@ namespace Voice_Game
                         mode = GameMode.Terminal;
                     }
 
-                    // Check if we've passed through the target
-                    if ((ball - target).Length < presenter.Settings.TargetDiameter / 2.0)
+                    // Check if we've passed through the target by checking to see how far the 
+                    // target is from the line segment between the last ball position and the 
+                    // current ball position.
+                    Vector flight = ball - lastBall;
+                    Vector targetRelative = target - lastBall;
+                    double scalarProjection = Vector.Dot(flight.Unit(), targetRelative);
+                    
+                    // If the scalar projection is less than zero or greater than one, the  
+                    // projection on to the flight vector does not lie on the segment between
+                    // the two flight positions. Thus we can simply check to see if the ball is 
+                    // within the valid target distance from the target center in the latest 
+                    // frame.
+                    if (scalarProjection > flight.Length || scalarProjection < 0)
                     {
-                        mode = GameMode.Terminal;
+                        if ((ball - target).Length < presenter.Settings.TargetValidDiameter / 2.0)
+                        {
+                            mode = GameMode.Terminal;
+                        }
                     }
+
+                    // If the scalar projection is between zero and one then it means the flight
+                    // vector includes the closest distance to the target. We can then check and
+                    // see if the closest point of approach was within the target valid diameter.
+                    else
+                    {
+                        Vector closestPoint = scalarProjection * flight.Unit();
+                        if ((targetRelative - closestPoint).Length < presenter.Settings.TargetValidDiameter / 2.0)
+                        {
+                            mode = GameMode.Terminal;
+                            ball = closestPoint + lastBall;
+                        }
+                    }
+
+                    
+                    // Set the last position for the ball to now be equal to the current
+                    // ball position.
+                    lastBall = ball.Clone();
                 }
 
                 /* The terminal phase of the flight is a single sub-frame time window in which

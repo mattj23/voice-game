@@ -56,6 +56,17 @@ namespace Voice_Game
             Z = Z / len;
         }
 
+        /// <summary>
+        /// Return a cloned copy of the current vector but of unit length.
+        /// </summary>
+        /// <returns></returns>
+        public Vector Unit()
+        {
+            Vector t = this.Clone();
+            t.Normalize();
+            return t;
+        }
+
         public static double Dot(Vector a, Vector b)
         {
             return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
