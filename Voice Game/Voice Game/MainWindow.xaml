@@ -97,8 +97,15 @@
                            Width="700"
                            Height="20"
                            Fill="Green" />
-                    <Ellipse Canvas.Top="{Binding Settings.TargetY}"
-                         Canvas.Left="{Binding Settings.TargetX}"
+                    <Rectangle Canvas.Top="{Binding Settings.Obstacle.Bottom}"
+                               Canvas.Bottom="{Binding Settings.Obstacle.Top}"
+                               Canvas.Left="{Binding Settings.Obstacle.Position}"
+                               Height="{Binding Settings.Obstacle.Height}"
+                               Width="30"
+                               Stroke="Black"
+                               Fill="DarkGray" />
+                    <Ellipse Canvas.Top="{Binding Settings.Target.Y}"
+                         Canvas.Left="{Binding Settings.Target.X}"
                          Height="{Binding Settings.TargetDiameter}"
                          Width="{Binding Settings.TargetDiameter}"
                          Fill="Red"

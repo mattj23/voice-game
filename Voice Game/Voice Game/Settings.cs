@@ -1,10 +1,12 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using System.IO;
+
+using Newtonsoft.Json;
 
 namespace Voice_Game
 {
@@ -22,13 +24,47 @@ namespace Voice_Game
         private double _gravity;
         private double _targetDiameter;
         private double _targetValidDiameter;
-        private double _targetX;
-        private double _targetY;
+
+        private bool _cleanTrace;
+
+
+        private Obstacle _obstacle;
+        private Vector _target;
 
         private int _windowMilliseconds;
 
         private double _volumeSpan;
         private double _pitchSpan;
+
+        public bool CleanTrace
+        {
+            get { return _cleanTrace; }
+            set
+            {
+                _cleanTrace = value;
+                OnPropertyChanged("CleanTrace");
+            }
+        }
+
+        public Vector Target
+        {
+            get { return _target; }
+            set
+            {
+                _target = value;
+                OnPropertyChanged("Target");
+            }
+        }
+
+        public Obstacle Obstacle
+        {
+            get { return _obstacle; }
+            set
+            {
+                _obstacle = value;
+                OnPropertyChanged("Obstacle");
+            }
+        }
 
         public int WindowMilliseconds
         {
@@ -70,6 +106,7 @@ namespace Voice_Game
             }
         }
 
+        [JsonIgnore]
         public double TargetShift
         {
             get { return - _targetDiameter / 2.0; }
@@ -85,25 +122,6 @@ namespace Voice_Game
                 OnPropertyChanged("TargetShift");
             }
         }
-        public double TargetX
-        {
-            get { return _targetX; }
-            set
-            {
-                _targetX = value;
-                OnPropertyChanged("TargetX");
-            }
-        }
-        public double TargetY
-        {
-            get { return _targetY; }
-            set
-            {
-                _targetY = value;
-                OnPropertyChanged("TargetY");
-            }
-        }
-
 
         public double Gravity
         {
@@ -206,12 +224,12 @@ namespace Voice_Game
             this.VolumeMinimum = -30;
             this.VolumeMaximum = 0;
             this.Gravity = -0.01;
-            this.TargetX = 600;
-            this.TargetY = 150;
             this.TargetDiameter = 30;
             this.PitchSpan = 200;
             this.VolumeSpan = 20;
             this.WindowMilliseconds = 30;
+            this.Obstacle = new Obstacle(200, 0, 400);
+            this.Target = new Vector(600, 150, 0);
         }
 
         public static void Serialize(string filename, Settings s)

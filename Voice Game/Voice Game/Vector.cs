@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Newtonsoft.Json;
+
 namespace Voice_Game
 {
     public class Vector : Notifier
@@ -32,6 +34,7 @@ namespace Voice_Game
             }
         }
 
+        [JsonIgnore]
         public double Z
         {
             get { return _z; }
@@ -42,6 +45,7 @@ namespace Voice_Game
             }
         }
 
+        [JsonIgnore]
         public double Length
         {
             get { return Math.Sqrt(Math.Pow(X, 2) + Math.Pow(Y, 2) + Math.Pow(Z, 2)); }

@@ -1,0 +1,84 @@
+/*  Voice Game Settings File
+    
+    This is the JSON encoded settings file for the Voice Game.  Defaults can be
+    changed here, but be sure to not invalidate the JSON format in the process
+    (with the exception of comments).  I switched to this format from XML
+    because of the simpler nature and the reduced ambiguity and redundancy.
+
+    Matt Jarvis, 08/25/2014
+*/
+
+{
+    // The VolumeSpan is the value of volume change (in dB) through which the
+    // program will scale the stretch (initial velocity) of the projectile
+    // smoothly between StretchMaximum and StretchMinimum
+    "VolumeSpan": 20.0, 
+    "StretchMaximum": 1.0,
+    "StretchMinimum": 0.0,
+
+
+    // The PitchSpan is the +/- value of frequency change (in Hz) through which
+    // the program will scale the angle evenly between AngleMin and AngleMax
+    "PitchSpan": 200.0,
+    "AngleMinimum": -90.0,
+    "AngleMaximum": 90.0,
+
+    // These parameters control the size and position of the target itself.
+    "TargetDiameter": 30.0,
+    "TargetValidDiameter":10.0, // This is the valid diameter in which a hit is registered
+    "Target":   {
+                    "X": 600.0,
+                    "Y": 200.0
+                },
+
+    // The obstacle will block the projectile. Set the position to some number
+    // beyond 2000 to remove it from the playing field.
+    "Obstacle": {
+                    "Position": 300.0,
+                    "Top": 200.0,
+                    "Bottom": 20.0
+                },
+
+    // Gravity is a fundamental acceleration added to the projectile while in
+    // flight, and should be increased to lower the distance which projectiles
+    // travel or decreased to increase the flight.  This along with the
+    // StretchMaximum parameter can be used to control the maximum flight
+    // distance.
+    "Gravity": -0.01,
+
+    // The WindowMilliseconds value sets the sound card window size for the FFT:
+    // that is, the number of milliseconds of data which is fed to the
+    // transform.  As a result it also controls how often the sound processing
+    // thread runs.  Making this value too small will narrow the time window
+    // during which the processing thread is able to compute the FFT and do its
+    // auxiliary work.  If the window size becomes smaller than the amount of
+    // computational time required, the thread will freeze and the game will
+    // cease to work.  Additionally, the smaller this value is the less data
+    // there is for the FFT to extract the pitch from.
+    "WindowMilliseconds": 30,
+
+    // These four parameters control the measurement of pitch and volume from
+    // the sound card.  The pitch minimum and maximum values are the region of
+    // the spectrum through which the program will attempt to resolve frequency.
+    // The VolumeMinimum is the lower threshold for what is considered to be
+    // zero volume (no voicing), and the VolumeMaximum should be zero.
+    "PitchMinimum": 75.0,   // Reference only, doesn't do anything
+    "PitchMaximum": 1000.0, // Reference only, doesn't do anything
+    "VolumeMinimum": -30.0,
+    "VolumeMaximum": 0.01,  // Reference only, doesn't do anything
+
+    // The CleanTrace option will remove adjacent duplicate values from the
+    // pitch/volume trace as long as the spacing between lines is less than the
+    // WindowMilliseconds parameter.  This option leaves a cleaner history but
+    // introduces a little bit of ambiguity about when the game frames were
+    // running. There is also the normal ambiguity in the voicing; the game
+    // frames are samples of the sound thread output.  If game frame "t"
+    // registers one value, and game frame "t+1" another, we cannot know when
+    // between "t" and "t+1" the actual pitch and volume values changed.  This
+    // ambiguity is empahsized when using this option, since we no longer have
+    // data and must now make the ~assumption~ that the game clock is regular,
+    // and we know that the value at game time "t" *probably* occured at some
+    // ambiguous time in the 16ms prior, but the timestamp which would confirm
+    // that has been lost.
+    "CleanTrace":true   // Takes the value "true" or "false"
+}

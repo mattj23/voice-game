@@ -87,13 +87,13 @@ namespace Voice_Game
 
         private void GameLoop()
         {
-            double dt = 1000 / 60.0;
+            double dt = (1000 / 60.0) - 1;
             System.Diagnostics.Stopwatch clock = new System.Diagnostics.Stopwatch();
             System.Diagnostics.Stopwatch traceClock = new System.Diagnostics.Stopwatch();
             clock.Start();
 
             // Prepare the target and ball last-position vectors
-            Vector target = new Vector(presenter.Settings.TargetX, presenter.Settings.TargetY, 0);
+            Vector target = presenter.Settings.Target;
             Vector lastBall = new Vector();
 
             // Prepare the tracking variables
@@ -107,7 +107,7 @@ namespace Voice_Game
             {
                 if (clock.Elapsed.Milliseconds < dt)
                 {
-                    Thread.Sleep(5);
+                    Thread.Sleep(1);
                     continue;
                 }
                 clock.Stop();
@@ -204,6 +204,16 @@ namespace Voice_Game
                     velocity.Y += (presenter.Settings.Gravity * (dt / 20.0));
                     ball = ball + (dt * velocity);
                     
+                    // Check if we've collided with the obstacle
+                    if (ball.X > presenter.Settings.Obstacle.Position &&
+                        ball.X < presenter.Settings.Obstacle.Position + 30 &&
+                        ball.Y > presenter.Settings.Obstacle.Bottom &&
+                        ball.Y < presenter.Settings.Obstacle.Top)
+                    {
+                        mode = GameMode.Terminal;
+                        outcome = "obstacle";
+                    }
+
                     // Check if we've gone off screen (miss)
                     if (ball.X > 700 || ball.X < 0 || ball.Y > 5000 || ball.Y < 20)
                     {
@@ -288,8 +298,37 @@ namespace Voice_Game
                     output.Add(string.Format("outcome, {0}", outcome));
                     output.Add("");
                     output.Add("time (ms), pitch (Hz), volume (dB)");
+                    long lastWrittenTime = 0;
+                    double lastWrittenPitch = 0;
+                    double lastWrittenVolume = 0;
                     for (int i = 0; i < trace.Count(); ++i)
-                        output.Add(string.Format("{0}, {1}, {2}", trace[i].Item1, trace[i].Item2, trace[i].Item3));
+                    {
+                        bool writeThisLine = true;
+
+                        // If we're doing a clean trace, we check to see if the last written pitch and 
+                        // volume is equal to the current volume. If it is we set the write flag to ignore
+                        // writing this line.
+                        if (presenter.Settings.CleanTrace)
+                        {
+                            if (lastWrittenPitch == trace[i].Item2 && lastWrittenVolume == trace[i].Item3)
+                                writeThisLine = false;
+                        }
+
+                        // If it's been equal to or more than the window frame from the last time we wrote
+                        // a line to the file, we need to write this one regardless of what the clean trace
+                        // option says.
+                        if (trace[i].Item1 - lastWrittenTime >= presenter.Settings.WindowMilliseconds)
+                            writeThisLine = true;
+
+                        if (writeThisLine)
+                        {
+                            lastWrittenTime = trace[i].Item1;
+                            lastWrittenPitch = trace[i].Item2;
+                            lastWrittenVolume = trace[i].Item3;
+                            output.Add(string.Format("{0}, {1}, {2}", trace[i].Item1, trace[i].Item2, trace[i].Item3));
+                        }
+                    }
+                    
                     string filename = string.Format("Trace {0:yyyy-MM-dd_HH-mm-ss}.csv", DateTime.Now);
                     File.WriteAllLines(filename, output);
 
