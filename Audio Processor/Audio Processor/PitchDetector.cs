@@ -35,7 +35,7 @@ namespace Audio_Processor
         public event ResultHandler ResultsComputed;
 
 
-        public PitchDetector(int sampleRate, int fftBins = 2048)
+        public PitchDetector(int sampleRate, int windowSize, int fftBins = 2048)
         {
             // Check to make sure the bins number is a power of two
             if ((fftBins & (fftBins - 1)) != 0)
@@ -67,14 +67,14 @@ namespace Audio_Processor
 
 
             /* Initialize the sound hardware wave device */
-            InitializeSoundSampler();
+            InitializeSoundSampler(windowSize);
         }
 
-        private void InitializeSoundSampler()
+        private void InitializeSoundSampler(int windowSize)
         {
             WaveInEvent soundDevice = new WaveInEvent();
             soundDevice.WaveFormat = new WaveFormat(samplingRate, 1);
-            soundDevice.BufferMilliseconds = 40;
+            soundDevice.BufferMilliseconds = windowSize;
             soundDevice.DataAvailable += new EventHandler<WaveInEventArgs>(SoundDevice_DataAvailible);
             soundDevice.StartRecording();
         }

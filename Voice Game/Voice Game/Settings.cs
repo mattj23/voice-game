@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,8 +25,20 @@ namespace Voice_Game
         private double _targetX;
         private double _targetY;
 
+        private int _windowMilliseconds;
+
         private double _volumeSpan;
         private double _pitchSpan;
+
+        public int WindowMilliseconds
+        {
+            get { return _windowMilliseconds; }
+            set
+            {
+                _windowMilliseconds = value;
+                OnPropertyChanged("WindowMilliseconds");
+            }
+        }
 
         public double TargetValidDiameter
         {
@@ -199,7 +211,7 @@ namespace Voice_Game
             this.TargetDiameter = 30;
             this.PitchSpan = 200;
             this.VolumeSpan = 20;
-
+            this.WindowMilliseconds = 30;
         }
 
         public static void Serialize(string filename, Settings s)

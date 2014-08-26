@@ -96,6 +96,13 @@ namespace Voice_Game
             Vector target = new Vector(presenter.Settings.TargetX, presenter.Settings.TargetY, 0);
             Vector lastBall = new Vector();
 
+            // Prepare the tracking variables
+            double closestApproach = 0;
+            string outcome = "";
+            double releasePitch = 0;
+            double releaseVolume = 0;
+            long releaseTime = 0;
+
             while (isRunning)
             {
                 if (clock.Elapsed.Milliseconds < dt)
@@ -165,16 +172,26 @@ namespace Voice_Game
                         triggerLaunch = false;
                         mode = GameMode.InFlight;
                         
-                        // Grab the data from three frames ago
+                        // Grab the data from ten frames ago
                         int targetFrame = trace.Count() - 10;
                         if (targetFrame < 0)
                             targetFrame = 0;
-                        angle = GetAngle(trace[targetFrame].Item2);
-                        stretch = GetStretch(trace[targetFrame].Item3);
+                        releasePitch = trace[targetFrame].Item2;
+                        releaseVolume = trace[targetFrame].Item3;
+                        releaseTime = trace[targetFrame].Item1;
+
+                        angle = GetAngle(releasePitch);
+                        stretch = GetStretch(releaseVolume);
 
                         // Prepare the initial velocity
                         velocity = stretch * new Vector(1, 0, 0);
                         velocity = velocity.RotateAboutZ(angle * Math.PI / 180.0);
+
+                        // Intialize the closest point of approach
+                        double distance = (target - ball).Length;
+                        if (ball.Y < target.Y)
+                            distance *= -1;
+                        closestApproach = distance;
 
                         // Set the last position for the ball to be equal to the current position
                         lastBall = ball.Clone();
@@ -184,13 +201,14 @@ namespace Voice_Game
                 if (mode == GameMode.InFlight)
                 {
                     presenter.IsAnchorVisible = false;
-                    velocity.Y += presenter.Settings.Gravity;
+                    velocity.Y += (presenter.Settings.Gravity * (dt / 20.0));
                     ball = ball + (dt * velocity);
                     
-                    // Check if we've gone off screen
+                    // Check if we've gone off screen (miss)
                     if (ball.X > 700 || ball.X < 0 || ball.Y > 5000 || ball.Y < 20)
                     {
                         mode = GameMode.Terminal;
+                        outcome = "miss";
                     }
 
                     // Check if we've passed through the target by checking to see how far the 
@@ -207,9 +225,18 @@ namespace Voice_Game
                     // frame.
                     if (scalarProjection > flight.Length || scalarProjection < 0)
                     {
+                        // Compute the new closest approach
+                        double distance = (target - ball).Length;
+                        if (ball.Y < target.Y)
+                            distance *= -1;
+                        if (Math.Abs(distance) < Math.Abs(closestApproach))
+                            closestApproach = distance;
+
+
                         if ((ball - target).Length < presenter.Settings.TargetValidDiameter / 2.0)
                         {
                             mode = GameMode.Terminal;
+                            outcome = "hit";
                         }
                     }
 
@@ -219,10 +246,19 @@ namespace Voice_Game
                     else
                     {
                         Vector closestPoint = scalarProjection * flight.Unit();
+
+                        // Compute the new closest approach
+                        double distance = (target - closestPoint).Length;
+                        if (ball.Y < target.Y)
+                            distance *= -1;
+                        if (Math.Abs(distance) < Math.Abs(closestApproach))
+                            closestApproach = distance;
+
                         if ((targetRelative - closestPoint).Length < presenter.Settings.TargetValidDiameter / 2.0)
                         {
                             mode = GameMode.Terminal;
                             ball = closestPoint + lastBall;
+                            outcome = "hit";
                         }
                     }
 
@@ -244,10 +280,17 @@ namespace Voice_Game
                     
                     // Write out the trace
                     List<string> output = new List<string>();
+                    output.Add(string.Format("trial, {0:hh:mm:ss tt}, {0:yyyy-MM-dd}", DateTime.Now));
+                    output.Add(string.Format("release time, {0}, ms", releaseTime));
+                    output.Add(string.Format("release pitch, {0}, Hz", releasePitch));
+                    output.Add(string.Format("release volume, {0}, dB", releaseVolume));
+                    output.Add(string.Format("closest approach, {0}", closestApproach));
+                    output.Add(string.Format("outcome, {0}", outcome));
+                    output.Add("");
                     output.Add("time (ms), pitch (Hz), volume (dB)");
                     for (int i = 0; i < trace.Count(); ++i)
                         output.Add(string.Format("{0}, {1}, {2}", trace[i].Item1, trace[i].Item2, trace[i].Item3));
-                    string filename = string.Format("Trace {0:yyyy-MM-dd_hh-mm-ss-tt}.csv", DateTime.Now);
+                    string filename = string.Format("Trace {0:yyyy-MM-dd_HH-mm-ss}.csv", DateTime.Now);
                     File.WriteAllLines(filename, output);
 
 
@@ -263,7 +306,7 @@ namespace Voice_Game
 
         private void DetectionEngine()
         {
-            PitchDetector detector = new PitchDetector(22050, 32768);
+            PitchDetector detector = new PitchDetector(22050, presenter.Settings.WindowMilliseconds, 32768);
             detector.ResultsComputed += VoiceInfoAvailible;
         }
 
