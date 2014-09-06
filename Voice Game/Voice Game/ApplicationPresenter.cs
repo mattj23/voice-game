@@ -22,6 +22,7 @@ namespace Voice_Game
 
         private double _frequency;
         private double _decibels;
+        private double _semitone;
 
         public Visibility AnchorVisibility
         {
@@ -83,13 +84,32 @@ namespace Voice_Game
         }
         public string FrequencyLabel
         {
-            get { return Frequency.ToString("0.0") + " Hz"; }
+            get 
+            {
+                // If we're not using semitones, we can simply return the frequency
+                if (!Settings.UseSemitones)
+                    return Frequency.ToString("0.0") + " Hz";
+
+                return string.Format("Semitone: {0:0.0} ({1:0.0} Hz)", Semitone, Frequency);
+
+            }
         }
         public string DecibelLabel
         {
             get { return Decibels.ToString("0.0") + " dB"; }
         }
-        
+
+        public double Semitone
+        {
+            get { return _semitone; }
+            set
+            {
+                _semitone = value;
+                OnPropertyChanged("Semitone");
+                OnPropertyChanged("FrequencyLabel");
+            }
+        }
+
         // Settings object
         private Settings _settings;
 

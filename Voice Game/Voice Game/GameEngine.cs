@@ -15,7 +15,7 @@ namespace Voice_Game
         private ApplicationPresenter presenter;
 
         // Game Mode enumeration
-        enum GameMode {StandBy, Aiming, InFlight, Terminal, PostFlight};
+        public enum GameMode {StandBy, Aiming, InFlight, Terminal, PostFlight};
 
         // Boolean read/write operations are atomic in C#, so this does not need to be 
         // wrapped to be thread-safe
@@ -50,7 +50,15 @@ namespace Voice_Game
         public void TriggerLaunch()
         {
             if (mode == GameMode.Aiming)
+            {
                 triggerLaunch = true;
+                presenter.Frequency = 0;
+            }
+        }
+
+        public GameMode GetMode()
+        {
+            return mode;
         }
 
         public void StartAiming()
@@ -61,9 +69,23 @@ namespace Voice_Game
 
         private double GetAngle(double frequency)
         {
-            // The given frequency is turned into a fraction which will range from -1 to +1 based 
-            // on the PitchSpan setting parameter.
-            double fraction = (frequency - pitchReference) / presenter.Settings.PitchSpan;
+            double fraction = 0;
+
+            // Are we using semitones? If so we need to calculate them
+            if (presenter.Settings.UseSemitones)
+            {
+                // ST = 12*log2(x/reference) ... email from Jarrad August 27, 2014
+                presenter.Semitone = 12 * Math.Log(frequency / pitchReference, 2);
+                fraction = presenter.Semitone / presenter.Settings.SemitoneSpan;
+            }
+            else
+            {
+                // The given frequency is turned into a fraction which will range from -1 to +1 based 
+                // on the PitchSpan setting parameter.
+                fraction = (frequency - pitchReference) / presenter.Settings.PitchSpan;
+            }
+            
+            // Set limits on the fraction
             if (fraction < -1) fraction = -1;
             if (fraction > 1) fraction = 1;
 
@@ -153,10 +175,23 @@ namespace Voice_Game
                         presenter.Frequency = Frequency;
                     else
                     {
+                        // If the release method is 1 and the volume has dropped below the threshold 
+                        // (i.e. we're in this block of code) then we can trigger the launch.
+                        if (presenter.Settings.ReleaseMethod == 1)
+                        {
+                            presenter.Frequency = 0;
+                            triggerLaunch = true;
+                        }
+                    }
+                    presenter.Decibels = Decibels;
+
+                    // If the release method is 0 and the elapsed time has exceeded the number of milliseconds
+                    // stored in AutoReleaseTime, we trigger the launch
+                    if (presenter.Settings.ReleaseMethod == 0 && traceClock.ElapsedMilliseconds > presenter.Settings.AutoReleaseTime)
+                    {
                         presenter.Frequency = 0;
                         triggerLaunch = true;
                     }
-                    presenter.Decibels = Decibels;
 
                     // Store the trace
                     trace.Add(new Tuple<long,double,double>(traceClock.ElapsedMilliseconds, Frequency, Decibels));
@@ -172,8 +207,12 @@ namespace Voice_Game
                         triggerLaunch = false;
                         mode = GameMode.InFlight;
                         
-                        // Grab the data from ten frames ago
-                        int targetFrame = trace.Count() - 10;
+                        // If the release method is 1, we must grab the data from ten frames ago,
+                        // otherwise we use the current frame
+                        int targetFrame = trace.Count() - 1;
+                        if (presenter.Settings.ReleaseMethod == 1)
+                            targetFrame = trace.Count() - 10;
+
                         if (targetFrame < 0)
                             targetFrame = 0;
                         releasePitch = trace[targetFrame].Item2;

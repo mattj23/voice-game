@@ -25,8 +25,13 @@ namespace Voice_Game
         private double _targetDiameter;
         private double _targetValidDiameter;
 
+        private double _semitoneSpan;
+        private bool _useSemitones;
+
         private bool _cleanTrace;
 
+        private int _autoReleaseTime;
+        private int _releaseMethod;
 
         private Obstacle _obstacle;
         private Vector _target;
@@ -35,6 +40,46 @@ namespace Voice_Game
 
         private double _volumeSpan;
         private double _pitchSpan;
+
+        public int AutoReleaseTime
+        {
+            get { return _autoReleaseTime; }
+            set
+            {
+                _autoReleaseTime = value;
+                OnPropertyChanged("AutoReleaseTime");
+            }
+        }
+
+        public int ReleaseMethod
+        {
+            get { return _releaseMethod; }
+            set
+            {
+                _releaseMethod = value;
+                OnPropertyChanged("ReleaseMethod");
+            }
+        }
+
+        public bool UseSemitones
+        {
+            get { return _useSemitones; }
+            set
+            {
+                _useSemitones = value;
+                OnPropertyChanged("UseSemitones");
+            }
+        }
+        public double SemitoneSpan
+        {
+            get { return _semitoneSpan; }
+            set
+            {
+                _semitoneSpan = value;
+                OnPropertyChanged("SemitoneSpan");
+            }
+        }
+
 
         public bool CleanTrace
         {

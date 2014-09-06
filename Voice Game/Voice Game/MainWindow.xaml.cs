@@ -34,7 +34,17 @@ namespace Voice_Game
         {
             if (e.Key == Key.Space)
             {
-                presenter.engine.StartAiming();
+                if (presenter.engine.GetMode() == GameEngine.GameMode.StandBy)
+                {
+                    presenter.engine.StartAiming();
+                    return;
+                }
+
+                if (presenter.engine.GetMode() == GameEngine.GameMode.Aiming && presenter.Settings.ReleaseMethod == 2 )
+                {
+                    presenter.engine.TriggerLaunch();
+                    return;
+                }
             }
         }
 
@@ -42,7 +52,7 @@ namespace Voice_Game
         {
             if (e.Key == Key.Space)
             {
-                //presenter.engine.TriggerLaunch();
+                // presenter.engine.TriggerLaunch();
             }
         }
     }

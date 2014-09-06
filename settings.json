@@ -16,12 +16,34 @@
     "StretchMaximum": 1.0,
     "StretchMinimum": 0.0,
 
+    
 
     // The PitchSpan is the +/- value of frequency change (in Hz) through which
     // the program will scale the angle evenly between AngleMin and AngleMax
     "PitchSpan": 200.0,
     "AngleMinimum": -90.0,
     "AngleMaximum": 90.0,
+
+    // If we use semitones instead of Hz, this option should be set to "true".
+    // Just like the PitchSpan variable above, we need a SemitoneSpan which
+    // determines the number of semitones across which the angles will smoothly
+    // interpolate.
+    "UseSemitones":true,
+    "SemitoneSpan":24,
+
+    // This next section controls the method of ball release.  There are three
+    // methods, the first waits a fixed number of milliseconds before
+    // automatically releasing the ball.  The second method releases the ball
+    // when the voicing drops below the volume threshold, looking back ten game-
+    // engine frames to get the voicing pitch and volume from before the drop.
+    // The third method waits for the user to press the spacebar a second time
+    // to release the ball.
+    //	Method 0 = release automatically after elapsed time
+    //  Method 1 = release when voice volume drops below threshold
+    //  Method 2 = release when spacebar is pressed a second time
+    "ReleaseMethod":1,			// This value will be 0, 1, or 2.  
+    "AutoReleaseTime":1000,		// This value is in milliseconds 
+
 
     // These parameters control the size and position of the target itself.
     "TargetDiameter": 30.0,
