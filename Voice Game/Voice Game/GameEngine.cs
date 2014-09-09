@@ -7,6 +7,8 @@ using System.Threading;
 using System.IO;
 
 using Audio_Processor;
+using Newtonsoft.Json;
+
 
 namespace Voice_Game
 {
@@ -106,6 +108,7 @@ namespace Voice_Game
             // StretchMinimum and StretchMaximum
             return fraction * (presenter.Settings.StretchMaximum - presenter.Settings.StretchMinimum) + presenter.Settings.StretchMinimum;
         }
+
 
         private void GameLoop()
         {
@@ -327,8 +330,37 @@ namespace Voice_Game
                 {
                     mode = GameMode.StandBy;
                     
-                    // Write out the trace
+                    // Serialze the settins data for the trace which is to be written
+                    string settings = JsonConvert.SerializeObject(presenter.Settings, Formatting.Indented);
+                    string[] settingsLines = settings.Split('\n');
+                    for (int i = 1; i < settingsLines.Count(); ++i)
+                        settingsLines[i] = "    " + settingsLines[i];
+                    settings = string.Join("\n", settingsLines);
+
+                    // Write out the trace in a JSON document
                     List<string> output = new List<string>();
+                    output.Add("{");
+                    output.Add("    \"test_id\":\"" + Guid.NewGuid().ToString() + "\",");
+                    output.Add("    \"subject\":\"" + presenter.SubjectId + "\",");
+                    output.Add("    \"timestamp\":\"" + string.Format("{0:HH:mm:ss}, {0:yyyy-MM-dd}", DateTime.Now) + "\",");
+                    output.Add("    \"release_time\":" + releaseTime.ToString() + ",");
+                    output.Add("    \"release_pitch\":" + releasePitch.ToString() + ",");
+                    output.Add("    \"release_volume\":" + releaseVolume.ToString() + ",");
+                    output.Add("    \"starting_pitch\":" + pitchReference.ToString() + ",");
+                    output.Add("    \"starting_volume\":" + pitchReference.ToString() + ",");
+                    output.Add("    \"closest_approach\":" + closestApproach.ToString() + ",");
+                    output.Add("    \"outcome\":\"" + outcome + "\",");
+
+                    List<string> traceOutput = new List<string>();
+                    for (int i = 0; i < trace.Count(); ++i)
+                        traceOutput.Add(string.Format("        [{0}, {1}, {2}]", trace[i].Item1, trace[i].Item2, trace[i].Item3));
+                    output.Add("    \"trace\":[");
+                    output.Add(string.Join(",\n", traceOutput));
+                    output.Add("    ],");
+                    
+                    output.Add("    \"settings\":" + settings);
+                    output.Add("}");
+                    /*
                     output.Add(string.Format("trial, {0:hh:mm:ss tt}, {0:yyyy-MM-dd}", DateTime.Now));
                     output.Add(string.Format("release time, {0}, ms", releaseTime));
                     output.Add(string.Format("release pitch, {0}, Hz", releasePitch));
@@ -367,8 +399,9 @@ namespace Voice_Game
                             output.Add(string.Format("{0}, {1}, {2}", trace[i].Item1, trace[i].Item2, trace[i].Item3));
                         }
                     }
-                    
-                    string filename = string.Format("Trace {0:yyyy-MM-dd_HH-mm-ss}.csv", DateTime.Now);
+                    */
+
+                    string filename = string.Format("Test {0:yyyy-MM-dd_HH-mm-ss}.json", DateTime.Now);
                     File.WriteAllLines(filename, output);
 
 

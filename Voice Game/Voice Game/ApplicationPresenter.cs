@@ -23,6 +23,7 @@ namespace Voice_Game
         private double _frequency;
         private double _decibels;
         private double _semitone;
+        private string _subjectId;
 
         public Visibility AnchorVisibility
         {
@@ -98,7 +99,15 @@ namespace Voice_Game
         {
             get { return Decibels.ToString("0.0") + " dB"; }
         }
-
+        public string SubjectId
+        {
+            get { return _subjectId; }
+            set
+            {
+                _subjectId = value;
+                OnPropertyChanged("SubjectId");
+            }
+        }
         public double Semitone
         {
             get { return _semitone; }
