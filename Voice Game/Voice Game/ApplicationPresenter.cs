@@ -106,7 +106,12 @@ namespace Voice_Game
             {
                 _subjectId = value;
                 OnPropertyChanged("SubjectId");
+                OnPropertyChanged("SubjectLabel");
             }
+        }
+        public string SubjectLabel
+        {
+            get { return string.Format("Subject: {0}", _subjectId); }
         }
         public double Semitone
         {
@@ -148,7 +153,8 @@ namespace Voice_Game
             Settings = JsonConvert.DeserializeObject<Settings>(File.ReadAllText(settingsFile));
             //Settings = Settings.Deserialize(settingsFile);
 
-
+            // Load the subject ID from the defaults
+            SubjectId = Voice_Game.Properties.Settings.Default.LastSubjectId;
 
             // Launch program
             Ball = new Vector();

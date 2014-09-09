@@ -46,6 +46,12 @@ namespace Voice_Game
                     return;
                 }
             }
+
+            if (e.Key == Key.N)
+            {
+                EnterTestSubject();
+                e.Handled = true;
+            }
         }
 
         private void Window_KeyUp(object sender, KeyEventArgs e)
@@ -54,6 +60,57 @@ namespace Voice_Game
             {
                 // presenter.engine.TriggerLaunch();
             }
+        }
+
+        private void EnterTestSubject()
+        {
+            InputBox.Visibility = System.Windows.Visibility.Visible;
+            InputTextBox.Focus();
+            InputTextBox.Text = string.Empty;
+        }
+
+        private void YesButton_Click(object sender, RoutedEventArgs e)
+        {
+            InputBoxFinalize();
+        }
+
+        private void NoButton_Click(object sender, RoutedEventArgs e)
+        {
+            // NoButton Clicked! Let's hide our InputBox.
+            InputBox.Visibility = System.Windows.Visibility.Collapsed;
+
+            // Clear InputBox.
+            InputTextBox.Text = String.Empty;
+        }
+
+        private void InputBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                InputBoxFinalize();
+            }
+            if (e.Key == Key.Escape)
+            {
+                InputTextBox.Text = string.Empty;
+                InputBox.Visibility = System.Windows.Visibility.Collapsed;
+            }
+        }
+
+        private void InputBoxFinalize()
+        {
+            // YesButton Clicked! Let's hide our InputBox and handle the input text.
+            InputBox.Visibility = System.Windows.Visibility.Collapsed;
+
+            // Do something with the Input
+            String input = InputTextBox.Text;
+            if (!string.IsNullOrEmpty(input.Trim()))
+            {
+                presenter.SubjectId = input;
+                Voice_Game.Properties.Settings.Default.LastSubjectId = input;
+                Voice_Game.Properties.Settings.Default.Save();
+            }
+            // Clear InputBox.
+            InputTextBox.Text = String.Empty;
         }
     }
 }

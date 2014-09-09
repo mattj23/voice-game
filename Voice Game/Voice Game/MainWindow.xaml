@@ -134,8 +134,40 @@
                       />
                 </Canvas>
             </Viewbox>
+            <TextBlock FontSize="12"
+                       FontWeight="Bold"
+                       Margin="5"
+                       Text="{Binding SubjectLabel}" />
         </Grid>
         
-        
+        <Grid x:Name="InputBox"
+              Visibility="Collapsed"
+              Grid.RowSpan="2">
+            <Grid.Background>
+                <SolidColorBrush Color="Black" Opacity="0.85"/>
+            </Grid.Background>
+            <Border
+                MinWidth="300"
+                Background="Gray" 
+                BorderBrush="Black" 
+                BorderThickness="1" 
+                CornerRadius="10" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" Color="Black" Direction="315" Opacity=".5" RenderingBias="Quality" ShadowDepth="10" />
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock x:Name="InputBoxLabel" Margin="10 5 10 5" Text="Enter Test Subject ID" FontWeight="Bold" />
+                    <TextBox HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="InputTextBox"
+                             PreviewKeyDown="InputBox_PreviewKeyDown"
+                             Margin="10 0 10 0"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="NoButton" Width="75" Margin="5" Content="No" Click="NoButton_Click" />
+                        <Button x:Name="YesButton" Width="75" Margin="5 5 10 5" Content="Accept" Click="YesButton_Click" FontWeight="Bold"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
