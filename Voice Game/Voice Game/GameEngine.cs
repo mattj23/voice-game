@@ -28,7 +28,7 @@ namespace Voice_Game
 
         // Element Position Variables
         private Vector ball = new Vector();
-        private Vector anchor = new Vector(60, 75, 0);
+        private Vector anchor = new Vector();
         private Vector velocity = new Vector();
 
         private double angle = 10;
@@ -257,7 +257,7 @@ namespace Voice_Game
                     }
 
                     // Check if we've gone off screen (miss)
-                    if (ball.X > 700 || ball.X < 0 || ball.Y > 5000 || ball.Y < 20)
+                    if (ball.X > presenter.Settings.FieldWidth || ball.X < 0 || ball.Y > 15000 || ball.Y < 20)
                     {
                         mode = GameMode.Terminal;
                         outcome = "miss";
@@ -347,7 +347,7 @@ namespace Voice_Game
                     output.Add("    \"release_pitch\":" + releasePitch.ToString() + ",");
                     output.Add("    \"release_volume\":" + releaseVolume.ToString() + ",");
                     output.Add("    \"starting_pitch\":" + pitchReference.ToString() + ",");
-                    output.Add("    \"starting_volume\":" + pitchReference.ToString() + ",");
+                    output.Add("    \"starting_volume\":" + volumeReference.ToString() + ",");
                     output.Add("    \"closest_approach\":" + closestApproach.ToString() + ",");
                     output.Add("    \"outcome\":\"" + outcome + "\",");
 
@@ -417,7 +417,7 @@ namespace Voice_Game
 
         private void DetectionEngine()
         {
-            PitchDetector detector = new PitchDetector(22050, presenter.Settings.WindowMilliseconds, 32768);
+            PitchDetector detector = new PitchDetector(22050, presenter.Settings.WindowMilliseconds, presenter.Settings.PitchPeakThreshold, 32768);
             detector.ResultsComputed += VoiceInfoAvailible;
         }
 
@@ -435,7 +435,8 @@ namespace Voice_Game
             presenter = _presenter;
 
             // Place Anchor
-            presenter.Anchor = anchor;
+            presenter.Anchor = presenter.Settings.Anchor;
+            anchor = presenter.Settings.Anchor;
 
             // Prepare the simulation starting conditions;
             mode = GameMode.StandBy;

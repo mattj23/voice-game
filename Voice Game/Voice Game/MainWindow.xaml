@@ -86,15 +86,15 @@
         <Grid Grid.Row="1" Background="LightBlue">
             <Viewbox Stretch="Uniform" 
                  VerticalAlignment="Bottom">
-                <Canvas Height="200"
-                    Width="700"
+                <Canvas Height="{Binding Settings.FieldHeight}"
+                    Width="{Binding Settings.FieldWidth}"
                     Background="LightBlue">
                     <Canvas.LayoutTransform>
                         <ScaleTransform ScaleY="-1" />
                     </Canvas.LayoutTransform>
                     <Rectangle Canvas.Top="0"
                            Canvas.Left="0"
-                           Width="700"
+                           Width="{Binding Settings.FieldWidth}"
                            Height="20"
                            Fill="Green" />
                     <Rectangle Canvas.Top="{Binding Settings.Obstacle.Bottom}"

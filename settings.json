@@ -14,9 +14,7 @@
     // smoothly between StretchMaximum and StretchMinimum
     "VolumeSpan": 20.0, 
     "StretchMaximum": 1.0,
-    "StretchMinimum": 0.0,
-
-    
+    "StretchMinimum": 0.0,    
 
     // The PitchSpan is the +/- value of frequency change (in Hz) through which
     // the program will scale the angle evenly between AngleMin and AngleMax
@@ -31,6 +29,11 @@
     "UseSemitones":true,
     "SemitoneSpan":24,
 
+    // The PeakPitchThreshold is the fraction of the global FFT maximum which a
+    // peak must be to be evaluated as the fundamental pitch from the audio
+    // sample.  Peaks are checked in order from lowest to highest.
+    "PeakPitchThreshold":0.90,
+
     // This next section controls the method of ball release.  There are three
     // methods, the first waits a fixed number of milliseconds before
     // automatically releasing the ball.  The second method releases the ball
@@ -38,11 +41,11 @@
     // engine frames to get the voicing pitch and volume from before the drop.
     // The third method waits for the user to press the spacebar a second time
     // to release the ball.
-    //	Method 0 = release automatically after elapsed time
+    //  Method 0 = release automatically after elapsed time
     //  Method 1 = release when voice volume drops below threshold
     //  Method 2 = release when spacebar is pressed a second time
-    "ReleaseMethod":1,			// This value will be 0, 1, or 2.  
-    "AutoReleaseTime":1000,		// This value is in milliseconds 
+    "ReleaseMethod":1,          // This value will be 0, 1, or 2.  
+    "AutoReleaseTime":1000,     // This value is in milliseconds 
 
 
     // These parameters control the size and position of the target itself.
@@ -51,6 +54,12 @@
     "Target":   {
                     "X": 600.0,
                     "Y": 200.0
+                },
+
+    // The anchor is the point where the sling is anchored
+    "Anchor":   {
+                    "X": 60.0,
+                    "Y": 75.0
                 },
 
     // The obstacle will block the projectile. Set the position to some number
@@ -67,6 +76,25 @@
     // StretchMaximum parameter can be used to control the maximum flight
     // distance.
     "Gravity": -0.01,
+
+    // The width of the playing field was originally 700 scaled pixels, and the
+    // height was 200.  The ratio between them has to do with the aspect ratio
+    // of the playing window: if the window exceeds the aspect ratio between the
+    // field height and width blue borders will appear at the edge of the field
+    // and the green "ground" will levitate into the air.  This is due to the
+    // nature of how the WPF container elements were set up, which allowed us to
+    // put the game's visual elements together very quickly. With that being
+    // said, the height of the field is irrelevant because the ball is designed
+    // to ignore it.  If you remove gravity and shoot straight up the ball will
+    // travel vertically until it exceeds the double floating point precision
+    // value of a 64bit system, which is quite large.  
+
+    // You can adjust this value, but the field height element will be scaled to
+    // 1/3rd of the width automatically. Notice that this will primarily make
+    // the visual elements smaller, and that the same effects of having a larger
+    // field can be achieved by changing the target size, obstacle height and
+    // position, gravity, and maximum stretch.
+    "FieldWidth":700,
 
     // The WindowMilliseconds value sets the sound card window size for the FFT:
     // that is, the number of milliseconds of data which is fed to the

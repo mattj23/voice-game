@@ -24,6 +24,7 @@ namespace Audio_Processor
         public double binSpacing;
         public double startFrequency;
         public double[] intensities;
+        private double firstPeakThreshold;
 
         public int window = 0;
 
@@ -35,7 +36,7 @@ namespace Audio_Processor
         public event ResultHandler ResultsComputed;
 
 
-        public PitchDetector(int sampleRate, int windowSize, int fftBins = 2048)
+        public PitchDetector(int sampleRate, int windowSize, double peakThreshold, int fftBins = 2048)
         {
             // Check to make sure the bins number is a power of two
             if ((fftBins & (fftBins - 1)) != 0)
@@ -44,6 +45,7 @@ namespace Audio_Processor
             }
 
             samplingRate = sampleRate;
+            firstPeakThreshold = peakThreshold;
 
             // Compute m
             this.m = (int)Math.Log(fftBins, 2.0);
@@ -166,7 +168,7 @@ namespace Audio_Processor
 
             // Now find the first bin with an intensity higher than 90% of the 
             // maximum intensity
-            double checkIntensity = 0.9 * maxIntensity;
+            double checkIntensity =firstPeakThreshold * maxIntensity;
             int maxIntensityBin = 0;
             for (int n = 0; n < intensities.Count(); ++n)
             {

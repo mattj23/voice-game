@@ -33,6 +33,9 @@ namespace Voice_Game
         private int _autoReleaseTime;
         private int _releaseMethod;
 
+        private Vector _anchor;
+        private double _pitchPeakThreshold;
+
         private Obstacle _obstacle;
         private Vector _target;
 
@@ -40,6 +43,44 @@ namespace Voice_Game
 
         private double _volumeSpan;
         private double _pitchSpan;
+
+        private double _fieldWidth;
+
+        public Vector Anchor
+        {
+            get { return _anchor; }
+            set
+            {
+                _anchor = value;
+                OnPropertyChanged("Anchor");
+            }
+        }
+
+        public double PitchPeakThreshold
+        {
+            get { return _pitchPeakThreshold; }
+            set
+            {
+                _pitchPeakThreshold = value;
+                OnPropertyChanged("PitchPeakThreshold");
+            }
+        }
+
+        public double FieldWidth
+        {
+            get { return _fieldWidth; }
+            set
+            {
+                _fieldWidth = value;
+                OnPropertyChanged("FieldWidth");
+            }
+        }
+
+        [JsonIgnore]
+        public double FieldHeight
+        {
+            get { return FieldWidth / 3.0; }
+        }
 
         public int AutoReleaseTime
         {
@@ -275,6 +316,8 @@ namespace Voice_Game
             this.WindowMilliseconds = 30;
             this.Obstacle = new Obstacle(200, 0, 400);
             this.Target = new Vector(600, 150, 0);
+            this.PitchPeakThreshold = 0.90;
+            this.Anchor = new Vector(60, 75, 0);
         }
 
         public static void Serialize(string filename, Settings s)
