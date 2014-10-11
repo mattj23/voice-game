@@ -1,0 +1,10 @@
+﻿<Window x:Class="Manifold_Mapper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="500" Width="500">
+    <Grid>
+        <Image x:Name="ImageWindow" Source="{Binding Bitmap}"
+               HorizontalAlignment="Stretch"
+               VerticalAlignment="Stretch"/>
+    </Grid>
+</Window>

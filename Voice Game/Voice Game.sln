@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voice Game", "Voice Game\Vo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Audio Processor", "..\Audio Processor\Audio Processor\Audio Processor.csproj", "{CC2BF19A-19BC-48F3-A324-15AA4C0F4E40}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manifold Mapper", "Manifold Mapper\Manifold Mapper.csproj", "{0CDBE3FD-8EFB-4920-9D8C-E0F990FD67D6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,6 +21,10 @@ Global
 		{CC2BF19A-19BC-48F3-A324-15AA4C0F4E40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC2BF19A-19BC-48F3-A324-15AA4C0F4E40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC2BF19A-19BC-48F3-A324-15AA4C0F4E40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CDBE3FD-8EFB-4920-9D8C-E0F990FD67D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CDBE3FD-8EFB-4920-9D8C-E0F990FD67D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CDBE3FD-8EFB-4920-9D8C-E0F990FD67D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CDBE3FD-8EFB-4920-9D8C-E0F990FD67D6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

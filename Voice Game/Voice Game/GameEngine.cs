@@ -16,6 +16,12 @@ namespace Voice_Game
     {
         private ApplicationPresenter presenter;
 
+        // Simulation mode stuff
+        public bool SimulationMode = false;
+        private bool simulationStarted = false;
+        public double cpaOutput;
+        public string outcomeOutput;
+
         // Game Mode enumeration
         public enum GameMode {StandBy, Aiming, InFlight, Terminal, PostFlight};
 
@@ -29,8 +35,10 @@ namespace Voice_Game
         // Element Position Variables
         private Vector ball = new Vector();
         private Vector anchor = new Vector();
+        private Vector target = new Vector();
         private Vector velocity = new Vector();
 
+        private Settings settings;
         private double angle = 10;
         private double stretch = .5;
         
@@ -74,17 +82,17 @@ namespace Voice_Game
             double fraction = 0;
 
             // Are we using semitones? If so we need to calculate them
-            if (presenter.Settings.UseSemitones)
+            if (settings.UseSemitones)
             {
                 // ST = 12*log2(x/reference) ... email from Jarrad August 27, 2014
                 presenter.Semitone = 12 * Math.Log(frequency / pitchReference, 2);
-                fraction = presenter.Semitone / presenter.Settings.SemitoneSpan;
+                fraction = presenter.Semitone / settings.SemitoneSpan;
             }
             else
             {
                 // The given frequency is turned into a fraction which will range from -1 to +1 based 
                 // on the PitchSpan setting parameter.
-                fraction = (frequency - pitchReference) / presenter.Settings.PitchSpan;
+                fraction = (frequency - pitchReference) / settings.PitchSpan;
             }
             
             // Set limits on the fraction
@@ -93,20 +101,20 @@ namespace Voice_Game
 
             // Now the fraction is turned into an angle based on even interplation between the setting
             // parameters for AngleMaximum and AngleMinimum
-            return fraction * (presenter.Settings.AngleMaximum - presenter.Settings.AngleMinimum) + (presenter.Settings.AngleMaximum + presenter.Settings.AngleMinimum) / 2.0;
+            return fraction * (settings.AngleMaximum - settings.AngleMinimum) + (settings.AngleMaximum + settings.AngleMinimum) / 2.0;
         }
 
         private double GetStretch(double volume)
         {
             // The given volume is turned into a fraction which will range from 0 to 1 based on the 
             // VolumeSpan setting parameter
-            double fraction = (volume - volumeReference) / presenter.Settings.VolumeSpan;
+            double fraction = (volume - volumeReference) / settings.VolumeSpan;
             if (fraction < 0) fraction = 0;
             if (fraction > 1) fraction = 1;
 
             // Now the fraction is turned into a stretch value based on an even interpolation between
             // StretchMinimum and StretchMaximum
-            return fraction * (presenter.Settings.StretchMaximum - presenter.Settings.StretchMinimum) + presenter.Settings.StretchMinimum;
+            return fraction * (settings.StretchMaximum - settings.StretchMinimum) + settings.StretchMinimum;
         }
 
 
@@ -118,7 +126,7 @@ namespace Voice_Game
             clock.Start();
 
             // Prepare the target and ball last-position vectors
-            Vector target = presenter.Settings.Target;
+            // Vector target = presenter.Settings.Target;
             Vector lastBall = new Vector();
 
             // Prepare the tracking variables
@@ -130,14 +138,22 @@ namespace Voice_Game
 
             while (isRunning)
             {
-                if (clock.Elapsed.Milliseconds < dt)
+                /* The following timer stalls the program for a given period of time (currently aimed
+                 * for 16ms) before the game loop continues through another pass.  In the case that 
+                 * the engine is in SimulationMode and thus not actually feeding an output window, we
+                 * do not care about the visual timing of the engine and would actually prefer the 
+                 * simulation runs at the fastest speed possible, thus we skip this step. */
+                if (!SimulationMode)
                 {
-                    Thread.Sleep(1);
-                    continue;
+                    if (clock.Elapsed.Milliseconds < dt)
+                    {
+                        Thread.Sleep(1);
+                        continue;
+                    }
+                    clock.Stop();
+                    clock.Reset();
+                    clock.Start();
                 }
-                clock.Stop();
-                clock.Reset();
-                clock.Start();
 
                 if (mode == GameMode.StandBy)
                 {
@@ -156,7 +172,7 @@ namespace Voice_Game
                     }
 
                     // Update the pitch and volume data
-                    if (Decibels > presenter.Settings.VolumeMinimum)
+                    if (Decibels > settings.VolumeMinimum)
                         presenter.Frequency = Frequency;
                     else
                         presenter.Frequency = 0;
@@ -174,13 +190,13 @@ namespace Voice_Game
                     stretch = GetStretch(Decibels);
 
                     // Update the pitch and volume data
-                    if (Decibels > presenter.Settings.VolumeMinimum)
+                    if (Decibels > settings.VolumeMinimum)
                         presenter.Frequency = Frequency;
                     else
                     {
                         // If the release method is 1 and the volume has dropped below the threshold 
                         // (i.e. we're in this block of code) then we can trigger the launch.
-                        if (presenter.Settings.ReleaseMethod == 1)
+                        if (settings.ReleaseMethod == 1)
                         {
                             presenter.Frequency = 0;
                             triggerLaunch = true;
@@ -190,7 +206,7 @@ namespace Voice_Game
 
                     // If the release method is 0 and the elapsed time has exceeded the number of milliseconds
                     // stored in AutoReleaseTime, we trigger the launch
-                    if (presenter.Settings.ReleaseMethod == 0 && traceClock.ElapsedMilliseconds > presenter.Settings.AutoReleaseTime)
+                    if (settings.ReleaseMethod == 0 && traceClock.ElapsedMilliseconds > settings.AutoReleaseTime)
                     {
                         presenter.Frequency = 0;
                         triggerLaunch = true;
@@ -213,7 +229,7 @@ namespace Voice_Game
                         // If the release method is 1, we must grab the data from ten frames ago,
                         // otherwise we use the current frame
                         int targetFrame = trace.Count() - 1;
-                        if (presenter.Settings.ReleaseMethod == 1)
+                        if (settings.ReleaseMethod == 1)
                             targetFrame = trace.Count() - 10;
 
                         if (targetFrame < 0)
@@ -242,22 +258,51 @@ namespace Voice_Game
 
                 if (mode == GameMode.InFlight)
                 {
-                    presenter.IsAnchorVisible = false;
-                    velocity.Y += (presenter.Settings.Gravity * (dt / 20.0));
+                    // If we are running in simulation mode, the engine will enter here at this
+                    // point and continue.  We need to do the necessary parts of code from the 
+                    // TriggerLaunch block above.
+                    if (SimulationMode && !simulationStarted)
+                    {
+                        simulationStarted = true;
+
+                        Vector drawn = -50 * stretch * new Vector(1, 0, 0);
+                        Vector temp = drawn.RotateAboutZ(angle * Math.PI / 180.0);
+                        ball = anchor + temp;
+
+                        // Prepare the initial velocity
+                        velocity = stretch * new Vector(1, 0, 0);
+                        velocity = velocity.RotateAboutZ(angle * Math.PI / 180.0);
+
+                        // Intialize the closest point of approach
+                        double distance = (target - ball).Length;
+                        if (ball.Y < target.Y)
+                            distance *= -1;
+                        closestApproach = distance;
+
+                        // Set the last position for the ball to be equal to the current position
+                        lastBall = ball.Clone();
+                    }
+
+                    if (presenter != null)
+                    {
+                        presenter.IsAnchorVisible = false;
+                    }
+                    velocity.Y += (settings.Gravity * (dt / 20.0));
                     ball = ball + (dt * velocity);
-                    
+
+
                     // Check if we've collided with the obstacle
-                    if (ball.X > presenter.Settings.Obstacle.Position &&
-                        ball.X < presenter.Settings.Obstacle.Position + 30 &&
-                        ball.Y > presenter.Settings.Obstacle.Bottom &&
-                        ball.Y < presenter.Settings.Obstacle.Top)
+                    if (ball.X > settings.Obstacle.Position &&
+                        ball.X < settings.Obstacle.Position + 30 &&
+                        ball.Y > settings.Obstacle.Bottom &&
+                        ball.Y < settings.Obstacle.Top)
                     {
                         mode = GameMode.Terminal;
                         outcome = "obstacle";
                     }
 
                     // Check if we've gone off screen (miss)
-                    if (ball.X > presenter.Settings.FieldWidth || ball.X < 0 || ball.Y > 15000 || ball.Y < 20)
+                    if (ball.X > settings.FieldWidth || ball.X < 0 || ball.Y > 15000 || ball.Y < 20)
                     {
                         mode = GameMode.Terminal;
                         outcome = "miss";
@@ -285,7 +330,7 @@ namespace Voice_Game
                             closestApproach = distance;
 
 
-                        if ((ball - target).Length < presenter.Settings.TargetValidDiameter / 2.0)
+                        if ((ball - target).Length < settings.TargetValidDiameter / 2.0)
                         {
                             mode = GameMode.Terminal;
                             outcome = "hit";
@@ -306,7 +351,7 @@ namespace Voice_Game
                         if (Math.Abs(distance) < Math.Abs(closestApproach))
                             closestApproach = distance;
 
-                        if ((targetRelative - closestPoint).Length < presenter.Settings.TargetValidDiameter / 2.0)
+                        if ((targetRelative - closestPoint).Length < settings.TargetValidDiameter / 2.0)
                         {
                             mode = GameMode.Terminal;
                             ball = closestPoint + lastBall;
@@ -328,14 +373,23 @@ namespace Voice_Game
                  * to something other than Terminal to prevent this block from being run again. */
                 if (mode == GameMode.Terminal)
                 {
+                    if (SimulationMode)
+                    {
+                        cpaOutput = closestApproach;
+                        outcomeOutput = outcome;
+                        isRunning = false;
+                        return;
+                    }
+
+
                     mode = GameMode.StandBy;
                     
                     // Serialze the settins data for the trace which is to be written
-                    string settings = JsonConvert.SerializeObject(presenter.Settings, Formatting.Indented);
-                    string[] settingsLines = settings.Split('\n');
+                    string settingsJson = JsonConvert.SerializeObject(settings, Formatting.Indented);
+                    string[] settingsLines = settingsJson.Split('\n');
                     for (int i = 1; i < settingsLines.Count(); ++i)
                         settingsLines[i] = "    " + settingsLines[i];
-                    settings = string.Join("\n", settingsLines);
+                    settingsJson = string.Join("\n", settingsLines);
 
                     // Write out the trace in a JSON document
                     List<string> output = new List<string>();
@@ -357,49 +411,9 @@ namespace Voice_Game
                     output.Add("    \"trace\":[");
                     output.Add(string.Join(",\n", traceOutput));
                     output.Add("    ],");
-                    
-                    output.Add("    \"settings\":" + settings);
+
+                    output.Add("    \"settings\":" + settingsJson);
                     output.Add("}");
-                    /*
-                    output.Add(string.Format("trial, {0:hh:mm:ss tt}, {0:yyyy-MM-dd}", DateTime.Now));
-                    output.Add(string.Format("release time, {0}, ms", releaseTime));
-                    output.Add(string.Format("release pitch, {0}, Hz", releasePitch));
-                    output.Add(string.Format("release volume, {0}, dB", releaseVolume));
-                    output.Add(string.Format("closest approach, {0}", closestApproach));
-                    output.Add(string.Format("outcome, {0}", outcome));
-                    output.Add("");
-                    output.Add("time (ms), pitch (Hz), volume (dB)");
-                    long lastWrittenTime = 0;
-                    double lastWrittenPitch = 0;
-                    double lastWrittenVolume = 0;
-                    for (int i = 0; i < trace.Count(); ++i)
-                    {
-                        bool writeThisLine = true;
-
-                        // If we're doing a clean trace, we check to see if the last written pitch and 
-                        // volume is equal to the current volume. If it is we set the write flag to ignore
-                        // writing this line.
-                        if (presenter.Settings.CleanTrace)
-                        {
-                            if (lastWrittenPitch == trace[i].Item2 && lastWrittenVolume == trace[i].Item3)
-                                writeThisLine = false;
-                        }
-
-                        // If it's been equal to or more than the window frame from the last time we wrote
-                        // a line to the file, we need to write this one regardless of what the clean trace
-                        // option says.
-                        if (trace[i].Item1 - lastWrittenTime >= presenter.Settings.WindowMilliseconds)
-                            writeThisLine = true;
-
-                        if (writeThisLine)
-                        {
-                            lastWrittenTime = trace[i].Item1;
-                            lastWrittenPitch = trace[i].Item2;
-                            lastWrittenVolume = trace[i].Item3;
-                            output.Add(string.Format("{0}, {1}, {2}", trace[i].Item1, trace[i].Item2, trace[i].Item3));
-                        }
-                    }
-                    */
 
                     string filename = string.Format("Test {0:yyyy-MM-dd_HH-mm-ss}.json", DateTime.Now);
                     File.WriteAllLines(filename, output);
@@ -409,15 +423,18 @@ namespace Voice_Game
                     trace = new List<Tuple<long, double, double>>();
                 }
 
-                presenter.Ball.X = ball.X;
-                presenter.Ball.Y = ball.Y;
+                if (!SimulationMode)
+                {
+                    presenter.Ball.X = ball.X;
+                    presenter.Ball.Y = ball.Y;
+                }
             }
 
         }
 
         private void DetectionEngine()
         {
-            PitchDetector detector = new PitchDetector(22050, presenter.Settings.WindowMilliseconds, presenter.Settings.PitchPeakThreshold, 32768);
+            PitchDetector detector = new PitchDetector(22050, settings.WindowMilliseconds, settings.PitchPeakThreshold, 32768);
             detector.ResultsComputed += VoiceInfoAvailible;
         }
 
@@ -430,13 +447,36 @@ namespace Voice_Game
             }
         }
 
+        /// <summary>
+        /// Creates a GameEngine instance in simulation mode
+        /// </summary>
+        /// <param name="settings"></param>
+        public GameEngine(Settings _settings, double _angle, double _stretch)
+        {
+            SimulationMode = true;
+
+            target = _settings.Target;
+            anchor = _settings.Anchor;
+            settings = _settings;
+
+            mode = GameMode.InFlight;
+            angle = _angle;
+            stretch = _stretch;
+
+            GameLoop();
+
+        }
+
         public GameEngine(ApplicationPresenter _presenter)
         {
             presenter = _presenter;
 
+
             // Place Anchor
             presenter.Anchor = presenter.Settings.Anchor;
+            target = presenter.Settings.Target;
             anchor = presenter.Settings.Anchor;
+            settings = presenter.Settings;
 
             // Prepare the simulation starting conditions;
             mode = GameMode.StandBy;
