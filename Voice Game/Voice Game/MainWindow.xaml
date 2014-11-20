@@ -134,10 +134,18 @@
                       />
                 </Canvas>
             </Viewbox>
+            <StackPanel Orientation="Horizontal">
             <TextBlock FontSize="12"
                        FontWeight="Bold"
                        Margin="5"
                        Text="{Binding SubjectLabel}" />
+                <TextBlock FontSize="12"
+                           Margin="5"
+                           Text="{Binding TrialCounter}"/>
+                <TextBlock FontSize="12"
+                           Margin="0 5"
+                           Text="trials"/>
+            </StackPanel>
         </Grid>
         
         <Grid x:Name="InputBox"

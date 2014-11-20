@@ -46,6 +46,40 @@ namespace Voice_Game
 
         private double _fieldWidth;
 
+        private int _startMethod;
+        private double _breakSeconds;
+        private int _breakCount;
+
+        public int StartMethod
+        {
+            get { return _startMethod; }
+            set
+            {
+                _startMethod = value;
+                OnPropertyChanged("StartMethod");
+            }
+        }
+
+        public int BreakCount
+        {
+            get { return _breakCount; }
+            set
+            {
+                _breakCount = value;
+                OnPropertyChanged("BreakCount");
+            }
+        }
+
+        public double BreakSeconds
+        {
+            get { return _breakSeconds; }
+            set
+            {
+                _breakSeconds = value;
+                OnPropertyChanged("BreakSeconds");
+            }
+        }
+
         public Vector Anchor
         {
             get { return _anchor; }
@@ -318,6 +352,9 @@ namespace Voice_Game
             this.Target = new Vector(600, 150, 0);
             this.PitchPeakThreshold = 0.90;
             this.Anchor = new Vector(60, 75, 0);
+            this.BreakCount = 100;
+            this.BreakSeconds = 300;
+            this.StartMethod = 0;
         }
 
         public static void Serialize(string filename, Settings s)

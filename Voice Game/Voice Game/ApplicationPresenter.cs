@@ -13,8 +13,13 @@ namespace Voice_Game
 {
     public class ApplicationPresenter : Notifier
     {
+        // Main infrastructure objects
         private MainWindow View;
         public GameEngine engine;
+
+        // Trial counting
+        private DateTime lastTrial;
+        private int _trialCounter;
 
         private bool _isAnchorVisible;
         private Vector _ball;
@@ -137,6 +142,16 @@ namespace Voice_Game
             }
         }
 
+        public int TrialCounter
+        {
+            get { return _trialCounter; }
+            set
+            {
+                _trialCounter = value;
+                OnPropertyChanged("TrialCounter");
+            }
+        }
+
         public ApplicationPresenter(MainWindow view)
         {
             View = view;
@@ -160,6 +175,49 @@ namespace Voice_Game
             Ball = new Vector();
             Anchor = new Vector();
             engine = new GameEngine(this);
+
+            // Subscribe to trial completed event
+            TrialCounter = 0;
+            lastTrial = DateTime.Now;
+            engine.TrialComplete += engine_TrialComplete;
+        }
+
+        /// <summary>
+        /// This is the event handler for the game engine's trial complete event.  It fires
+        /// when a trial is finished immediately after the trace has been written to the disk
+        /// and is intended to allow this portion of the program to track the frequency of
+        /// trials and allow the program to notify the user when he/she should take a break.
+        /// </summary>
+        /// <param name="sender">the game engine object</param>
+        /// <param name="e">event arguments, empty for now</param>
+        void engine_TrialComplete(object sender, EventArgs e)
+        {
+            if ((DateTime.Now - lastTrial).TotalSeconds < Settings.BreakSeconds)
+                TrialCounter++;
+            else
+                TrialCounter = 1;
+            lastTrial = DateTime.Now;
+
+
+            if (TrialCounter == (int)(Settings.BreakCount * 1.1) + 1)
+            {
+                
+                string message = String.Format("Seriously, though...take a break.", TrialCounter);
+                Application.Current.Dispatcher.BeginInvoke(new Action(() => Interrupt(message, 5))); 
+
+            }
+            else if (TrialCounter == Settings.BreakCount)
+            {
+                string message = String.Format("Great job! You have labored through {0} trials and you deserve a break!", TrialCounter);
+                Application.Current.Dispatcher.BeginInvoke(new Action(() => Interrupt(message, 5))); 
+
+            }
+        }
+
+        private void Interrupt(string message, int delay)
+        {
+            InterruptBox interrupt = new InterruptBox(message, delay);
+            interrupt.ShowDialog();
         }
     }
 }

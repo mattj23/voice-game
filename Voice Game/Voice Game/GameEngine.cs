@@ -22,6 +22,10 @@ namespace Voice_Game
         public double cpaOutput;
         public string outcomeOutput;
 
+        // Game engine events
+        public delegate void TrialCompleteEventHandler(object sender, EventArgs e);
+        public event TrialCompleteEventHandler TrialComplete;
+
         // Game Mode enumeration
         public enum GameMode {StandBy, Aiming, InFlight, Terminal, PostFlight};
 
@@ -135,6 +139,7 @@ namespace Voice_Game
             double releasePitch = 0;
             double releaseVolume = 0;
             long releaseTime = 0;
+            Decibels = -100;
 
             while (isRunning)
             {
@@ -157,6 +162,21 @@ namespace Voice_Game
 
                 if (mode == GameMode.StandBy)
                 {
+                    // Update the pitch and volume data
+                    if (Decibels > settings.VolumeMinimum)
+                        presenter.Frequency = Frequency;
+                    else
+                        presenter.Frequency = 0;
+                    presenter.Decibels = Decibels;
+
+                    // If the StartMethod is 1 (volume detection) we will trigger the startAiming flag
+                    // if the decibels exceeed the volume minimum, and the next run through the loop the
+                    // program will capture the reference values and begin the trace clock.
+                    if (settings.StartMethod == 1 && Decibels > settings.VolumeMinimum)
+                    {
+                        startAiming = true;
+                    }
+
                     /* On the startAiming flag we know that the user has depressed the spacebar key. We 
                      * capture the current voice volume and pitch and will use them as references during
                      * the aiming process. */
@@ -170,13 +190,6 @@ namespace Voice_Game
                         traceClock.Reset();
                         traceClock.Start();
                     }
-
-                    // Update the pitch and volume data
-                    if (Decibels > settings.VolumeMinimum)
-                        presenter.Frequency = Frequency;
-                    else
-                        presenter.Frequency = 0;
-                    presenter.Decibels = Decibels;
                 }
 
                 if (mode == GameMode.Aiming)
@@ -417,10 +430,12 @@ namespace Voice_Game
 
                     string filename = string.Format("Test {0:yyyy-MM-dd_HH-mm-ss}.json", DateTime.Now);
                     File.WriteAllLines(filename, output);
-
-
-
                     trace = new List<Tuple<long, double, double>>();
+
+
+                    // If there is an object subscribed to the new trial event, we fire it now
+                    if (TrialComplete != null)
+                        TrialComplete(this, new EventArgs());
                 }
 
                 if (!SimulationMode)

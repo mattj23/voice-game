@@ -1,0 +1,23 @@
+﻿<Window x:Class="Voice_Game.InterruptBox"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Closing="Window_Closing"  
+        Title="Voice Game Trial Counter" Height="147.288" Width="300" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" WindowStyle="ToolWindow">
+    <DockPanel>
+        <Button IsEnabled="False"
+                x:Name="closeButton"
+                DockPanel.Dock="Bottom"
+                HorizontalAlignment="Right"
+                Click="closeButton_Click"
+                Width="100"
+                Height="25"
+                Margin="10">
+            <TextBlock x:Name="buttonLabel" Text="Ok"/>
+        </Button>
+        <TextBlock x:Name="blockText"
+                   TextWrapping="Wrap"
+                   Margin="5">
+            This is a bunch of sample text
+        </TextBlock>
+    </DockPanel>
+</Window>

@@ -117,25 +117,6 @@
     "VolumeMinimum": -30.0,
     "VolumeMaximum": 0.01,  // Reference only, doesn't do anything
 
-
-    // These two variables control the interruption of the user's testing.
-    // Whenever a trial ends, the program checks the time of completion of the
-    // previous trial and checks how many seconds have elapsed.  If the number
-    // of elapsed seconds is greater than BreakSeconds, the trial counter is
-    // incremented, otherwise it is reset to zero.  If the subject name is
-    // changed, the counter is also reset.  If the counter exceeds BreakCount,
-    // the program flashes a message box to the user suggesting they take a
-    // break.
-    "BreakSeconds":300,
-    "BreakCount":10,
-
-    // The start method determines how the game enters the aiming mode from
-    // standby.  If StartMethod == 0 the proogram waits for the user to press
-    // the space bar to begin aiming.  If StartMethod == 1 the program waits for
-    // the volume to exceed the VolumeMinimum and then triggers the start.
-    "StartMethod":0,
-
-
     // The CleanTrace option will remove adjacent duplicate values from the
     // pitch/volume trace as long as the spacing between lines is less than the
     // WindowMilliseconds parameter.  This option leaves a cleaner history but
@@ -150,6 +131,4 @@
     // ambiguous time in the 16ms prior, but the timestamp which would confirm
     // that has been lost.
     "CleanTrace":true   // Takes the value "true" or "false"
-
-
 }

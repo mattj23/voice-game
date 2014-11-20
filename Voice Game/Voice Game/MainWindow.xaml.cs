@@ -34,7 +34,7 @@ namespace Voice_Game
         {
             if (e.Key == Key.Space)
             {
-                if (presenter.engine.GetMode() == GameEngine.GameMode.StandBy)
+                if (presenter.engine.GetMode() == GameEngine.GameMode.StandBy && presenter.Settings.StartMethod == 0)
                 {
                     presenter.engine.StartAiming();
                     return;
@@ -47,7 +47,7 @@ namespace Voice_Game
                 }
             }
 
-            if (e.Key == Key.N)
+            if (e.Key == Key.N && InputBox.Visibility == System.Windows.Visibility.Collapsed)
             {
                 EnterTestSubject();
                 e.Handled = true;
@@ -102,10 +102,16 @@ namespace Voice_Game
             InputBox.Visibility = System.Windows.Visibility.Collapsed;
 
             // Do something with the Input
-            String input = InputTextBox.Text;
-            if (!string.IsNullOrEmpty(input.Trim()))
+            String input = InputTextBox.Text.Trim();
+            if (!string.IsNullOrEmpty(input))
             {
+                // If we're changing subject IDs, we can reset the trial counter
+                // to reflect the new user
+                if (presenter.SubjectId != input)
+                    presenter.TrialCounter = 0;
+
                 presenter.SubjectId = input;
+
                 Voice_Game.Properties.Settings.Default.LastSubjectId = input;
                 Voice_Game.Properties.Settings.Default.Save();
             }
