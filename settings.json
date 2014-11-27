@@ -132,9 +132,11 @@
     // The start method determines how the game enters the aiming mode from
     // standby.  If StartMethod == 0 the proogram waits for the user to press
     // the space bar to begin aiming.  If StartMethod == 1 the program waits for
-    // the volume to exceed the VolumeMinimum and then triggers the start.
-    "StartMethod":0,
-
+    // the volume to exceed the VolumeMinimum and then counts to
+    // StartFrameCount, using the final frame for the initial pitch and volume
+    // values.  StartFrameCount does nothing if StartMethod == 0.
+    "StartMethod":1,
+    "StartFrameCount":6,
 
     // The CleanTrace option will remove adjacent duplicate values from the
     // pitch/volume trace as long as the spacing between lines is less than the

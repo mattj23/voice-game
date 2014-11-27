@@ -216,8 +216,10 @@ namespace Voice_Game
 
         private void Interrupt(string message, int delay)
         {
+            engine.SetMode(GameEngine.GameMode.Pause);
             InterruptBox interrupt = new InterruptBox(message, delay);
             interrupt.ShowDialog();
+            engine.SetMode(GameEngine.GameMode.StandBy);
         }
     }
 }

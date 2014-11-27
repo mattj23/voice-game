@@ -27,7 +27,7 @@ namespace Voice_Game
         public event TrialCompleteEventHandler TrialComplete;
 
         // Game Mode enumeration
-        public enum GameMode {StandBy, Aiming, InFlight, Terminal, PostFlight};
+        public enum GameMode {StandBy, Aiming, InFlight, Terminal, PostFlight, Pause};
 
         // Boolean read/write operations are atomic in C#, so this does not need to be 
         // wrapped to be thread-safe
@@ -56,6 +56,7 @@ namespace Voice_Game
         double volumeReference = 0;
 
         // Voice trace
+        private int limboFrameCount = 0;
         List<Tuple<long, double, double>> trace = new List<Tuple<long, double, double>>();
 
         // Simulation Mode
@@ -73,6 +74,11 @@ namespace Voice_Game
         public GameMode GetMode()
         {
             return mode;
+        }
+
+        public void SetMode(GameMode m)
+        {
+            mode = m;
         }
 
         public void StartAiming()
@@ -174,8 +180,15 @@ namespace Voice_Game
                     // program will capture the reference values and begin the trace clock.
                     if (settings.StartMethod == 1 && Decibels > settings.VolumeMinimum)
                     {
-                        startAiming = true;
+                        limboFrameCount++;
+                        if (limboFrameCount > settings.StartFrameCount)
+                        {
+                            limboFrameCount = 0;
+                            startAiming = true;
+                        }
                     }
+                    else
+                        limboFrameCount = 0;
 
                     /* On the startAiming flag we know that the user has depressed the spacebar key. We 
                      * capture the current voice volume and pitch and will use them as references during

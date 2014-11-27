@@ -49,6 +49,17 @@ namespace Voice_Game
         private int _startMethod;
         private double _breakSeconds;
         private int _breakCount;
+        private int _startFrameCount;
+
+        public int StartFrameCount
+        {
+            get { return _startFrameCount; }
+            set
+            {
+                _startFrameCount = value;
+                OnPropertyChanged("StartFrameCount");
+            }
+        }
 
         public int StartMethod
         {
