@@ -11,8 +11,13 @@
 {
     // The VolumeSpan is the value of volume change (in dB) through which the
     // program will scale the stretch (initial velocity) of the projectile
-    // smoothly between StretchMaximum and StretchMinimum
+    // smoothly between StretchMaximum and StretchMinimum.  VolumeMethod is
+    // either 1 or 2.  If VolumeMethod == 1 then the stretch is scaled between
+    // the minimum volume and the minimum volume + VolumeSpan.  If VolumeMethod
+    // == 2 the stretch is scaled between the initial voicing volume and the
+    // initial voicing volume + VolumeSpan.
     "VolumeSpan": 20.0, 
+    "VolumeMethod":1,
     "StretchMaximum": 1.0,
     "StretchMinimum": 0.0,    
 

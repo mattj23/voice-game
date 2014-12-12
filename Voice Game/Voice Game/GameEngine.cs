@@ -198,7 +198,12 @@ namespace Voice_Game
                         startAiming = false;
                         mode = GameMode.Aiming;
                         pitchReference = Frequency;
-                        volumeReference = Decibels;
+
+                        if (settings.VolumeMethod == 1)
+                            volumeReference = settings.VolumeMinimum;
+                        else
+                            volumeReference = Decibels;
+                        
                         trace = new List<Tuple<long, double, double>>();
                         traceClock.Reset();
                         traceClock.Start();

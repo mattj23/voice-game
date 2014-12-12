@@ -51,6 +51,18 @@ namespace Voice_Game
         private int _breakCount;
         private int _startFrameCount;
 
+        private int _volumeMethod;
+
+        public int VolumeMethod
+        {
+            get { return _volumeMethod; }
+            set
+            {
+                _volumeMethod = value;
+                OnPropertyChanged("VolumeMethod");
+            }
+        }
+
         public int StartFrameCount
         {
             get { return _startFrameCount; }
@@ -366,6 +378,7 @@ namespace Voice_Game
             this.BreakCount = 100;
             this.BreakSeconds = 300;
             this.StartMethod = 0;
+            this.VolumeMethod = 1;
         }
 
         public static void Serialize(string filename, Settings s)
