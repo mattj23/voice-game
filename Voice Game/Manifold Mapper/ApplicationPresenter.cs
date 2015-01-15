@@ -238,8 +238,9 @@ namespace Manifold_Mapper
             if (Settings.Anchor == null)
                 Settings.Anchor = new Voice_Game.Vector(60, 75, 0);
 
-            // GameEngine engine = new GameEngine(Settings, 45, 1);
-            // System.Diagnostics.Debug.WriteLine(engine.cpaOutput.ToString());
+            //GameEngine engine = new GameEngine(Settings, 26.9668518038805, 1.80445138558691);
+
+            //System.Diagnostics.Debug.WriteLine(engine.cpaOutput.ToString());
             ComputeBitmap();
             //StartWorker();
             

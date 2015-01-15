@@ -147,6 +147,9 @@ namespace Voice_Game
             long releaseTime = 0;
             Decibels = -100;
 
+            double releaseAngle = 0;
+            double releaseStretch = 0;
+
             while (isRunning)
             {
                 /* The following timer stalls the program for a given period of time (currently aimed
@@ -212,14 +215,14 @@ namespace Voice_Game
 
                 if (mode == GameMode.Aiming)
                 {
+                    angle = GetAngle(Frequency);
+                    stretch = GetStretch(Decibels);
+
                     // Position ball on slingshot
                     Vector drawn = -50 * stretch * new Vector(1, 0, 0);
                     Vector temp = drawn.RotateAboutZ(angle * Math.PI / 180.0);
                     ball = anchor + temp;
-
-                    angle = GetAngle(Frequency);
-                    stretch = GetStretch(Decibels);
-
+                    
                     // Update the pitch and volume data
                     if (Decibels > settings.VolumeMinimum)
                         presenter.Frequency = Frequency;
@@ -271,6 +274,11 @@ namespace Voice_Game
 
                         angle = GetAngle(releasePitch);
                         stretch = GetStretch(releaseVolume);
+                        releaseAngle = angle;
+                        releaseStretch = stretch;
+
+                        // Set the ball starting position
+                        ball = anchor.Clone();
 
                         // Prepare the initial velocity
                         velocity = stretch * new Vector(1, 0, 0);
@@ -296,9 +304,8 @@ namespace Voice_Game
                     {
                         simulationStarted = true;
 
-                        Vector drawn = -50 * stretch * new Vector(1, 0, 0);
-                        Vector temp = drawn.RotateAboutZ(angle * Math.PI / 180.0);
-                        ball = anchor + temp;
+                        // Set the ball at the starting position
+                        ball = anchor.Clone();
 
                         // Prepare the initial velocity
                         velocity = stretch * new Vector(1, 0, 0);
@@ -431,6 +438,8 @@ namespace Voice_Game
                     output.Add("    \"release_time\":" + releaseTime.ToString() + ",");
                     output.Add("    \"release_pitch\":" + releasePitch.ToString() + ",");
                     output.Add("    \"release_volume\":" + releaseVolume.ToString() + ",");
+                    output.Add("    \"release_angle\":" + releaseAngle.ToString() + ",");
+                    output.Add("    \"release_stretch\":" + releaseStretch.ToString() + ",");
                     output.Add("    \"starting_pitch\":" + pitchReference.ToString() + ",");
                     output.Add("    \"starting_volume\":" + volumeReference.ToString() + ",");
                     output.Add("    \"closest_approach\":" + closestApproach.ToString() + ",");
