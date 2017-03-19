@@ -26,7 +26,7 @@
     // Just like the PitchSpan variable above, we need a SemitoneSpan which
     // determines the number of semitones across which the angles will smoothly
     // interpolate.
-    "UseSemitones":true,
+    "UseSemitones":false,
     "SemitoneSpan":24,
 
     // The PeakPitchThreshold is the fraction of the global FFT maximum which a

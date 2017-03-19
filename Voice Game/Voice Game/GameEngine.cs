@@ -36,6 +36,8 @@ namespace Voice_Game
         private bool triggerLaunch = false;
         private bool startAiming = false;
 
+        private SynchronizationContext mainContext;
+
         // Element Position Variables
         private Vector ball = new Vector();
         private Vector anchor = new Vector();
@@ -147,8 +149,6 @@ namespace Voice_Game
             double closestApproach = distance;
 
             var lastBall = ball.Clone();
-            velocity.Y += (settings.Gravity * (dt / 20.0));
-            ball = ball + (dt * velocity);
 
             TrajectoryResult result = new TrajectoryResult
             {
@@ -159,6 +159,10 @@ namespace Voice_Game
             // Simulation loop
             while (true)
             {
+
+                velocity.Y += (settings.Gravity * (dt / 20.0));
+                ball = ball + (dt * velocity);
+
                 // Check if we've collided with the obstacle
                 if (ball.X > settings.Obstacle.Position &&
                     ball.X < settings.Obstacle.Position + 30 &&
@@ -325,191 +329,34 @@ namespace Voice_Game
                 {
                     angle = GetAngle(Frequency);
                     stretch = GetStretch(Decibels);
-
-                    // Position ball on slingshot
-                    Vector drawn = -50 * stretch * new Vector(1, 0, 0);
-                    Vector temp = drawn.RotateAboutZ(angle * Math.PI / 180.0);
-                    ball = anchor + temp;
+                    
                     
                     // Update the pitch and volume data
                     if (Decibels > settings.VolumeMinimum)
                         presenter.Frequency = Frequency;
-                    else
-                    {
-                        // If the release method is 1 and the volume has dropped below the threshold 
-                        // (i.e. we're in this block of code) then we can trigger the launch.
-                        if (settings.ReleaseMethod == 1)
-                        {
-                            presenter.Frequency = 0;
-                            triggerLaunch = true;
-                        }
-                    }
                     presenter.Decibels = Decibels;
-
-                    // If the release method is 0 and the elapsed time has exceeded the number of milliseconds
-                    // stored in AutoReleaseTime, we trigger the launch
-                    if (settings.ReleaseMethod == 0 && traceClock.ElapsedMilliseconds > settings.AutoReleaseTime)
-                    {
-                        presenter.Frequency = 0;
-                        triggerLaunch = true;
-                    }
-
+                    
                     // Store the trace
                     trace.Add(new Tuple<long,double,double>(traceClock.ElapsedMilliseconds, Frequency, Decibels));
 
                     // Make sure the anchor and stretching band are visible
                     presenter.IsAnchorVisible = true;
 
-                    // When the given condition is achieved to trigger the launch of the projectile,
-                    // the triggerLaunch flag is set. To ensure that this state lasts for only part of
-                    // a single frame, the flag is immediately unset and the game mode changes.
-                    if (triggerLaunch)
+                    var result = ComputeTrajectory(angle, stretch);
+
+                    // Post the copying of the trajectory on the main thread.  This should be fast, all it's doing 
+                    // is copying a bunch of references to an observable collection.
+                    this.mainContext.Post(new SendOrPostCallback(o =>
                     {
-                        triggerLaunch = false;
-                        mode = GameMode.InFlight;
-                        
-                        // If the release method is 1, we must grab the data from ten frames ago,
-                        // otherwise we use the current frame
-                        int targetFrame = trace.Count() - 1;
-                        if (settings.ReleaseMethod == 1)
-                            targetFrame = trace.Count() - 10;
-
-                        if (targetFrame < 0)
-                            targetFrame = 0;
-                        releasePitch = trace[targetFrame].Item2;
-                        releaseVolume = trace[targetFrame].Item3;
-                        releaseTime = trace[targetFrame].Item1;
-
-                        angle = GetAngle(releasePitch);
-                        stretch = GetStretch(releaseVolume);
-                        releaseAngle = angle;
-                        releaseStretch = stretch;
-
-                        // Set the ball starting position
-                        ball = anchor.Clone();
-
-                        // Prepare the initial velocity
-                        velocity = stretch * new Vector(1, 0, 0);
-                        velocity = velocity.RotateAboutZ(angle * Math.PI / 180.0);
-
-                        // Intialize the closest point of approach
-                        double distance = (target - ball).Length;
-                        if (ball.Y < target.Y)
-                            distance *= -1;
-                        closestApproach = distance;
-
-                        // Set the last position for the ball to be equal to the current position
-                        lastBall = ball.Clone();
-                    }
-                }
-
-                if (mode == GameMode.InFlight)
-                {
-                    // If we are running in simulation mode, the engine will enter here at this
-                    // point and continue.  We need to do the necessary parts of code from the 
-                    // TriggerLaunch block above.
-                    if (SimulationMode && !simulationStarted)
-                    {
-                        simulationStarted = true;
-
-                        // Set the ball at the starting position
-                        ball = anchor.Clone();
-
-                        // Prepare the initial velocity
-                        velocity = stretch * new Vector(1, 0, 0);
-                        velocity = velocity.RotateAboutZ(angle * Math.PI / 180.0);
-
-                        // Intialize the closest point of approach
-                        double distance = (target - ball).Length;
-                        if (ball.Y < target.Y)
-                            distance *= -1;
-                        closestApproach = distance;
-
-                        // Set the last position for the ball to be equal to the current position
-                        lastBall = ball.Clone();
-                    }
-
-                    if (presenter != null)
-                    {
-                        presenter.IsAnchorVisible = false;
-                    }
-                    velocity.Y += (settings.Gravity * (dt / 20.0));
-                    ball = ball + (dt * velocity);
-
-
-                    // Check if we've collided with the obstacle
-                    if (ball.X > settings.Obstacle.Position &&
-                        ball.X < settings.Obstacle.Position + 30 &&
-                        ball.Y > settings.Obstacle.Bottom &&
-                        ball.Y < settings.Obstacle.Top)
-                    {
-                        mode = GameMode.Terminal;
-                        outcome = "obstacle";
-                    }
-
-                    // Check if we've gone off screen (miss)
-                    if (ball.X > settings.FieldWidth || ball.X < 0 || ball.Y > 15000 || ball.Y < 20)
-                    {
-                        mode = GameMode.Terminal;
-                        outcome = "miss";
-                    }
-
-                    // Check if we've passed through the target by checking to see how far the 
-                    // target is from the line segment between the last ball position and the 
-                    // current ball position.
-                    Vector flight = ball - lastBall;
-                    Vector targetRelative = target - lastBall;
-                    double scalarProjection = Vector.Dot(flight.Unit(), targetRelative);
-                    
-                    // If the scalar projection is less than zero or greater than one, the  
-                    // projection on to the flight vector does not lie on the segment between
-                    // the two flight positions. Thus we can simply check to see if the ball is 
-                    // within the valid target distance from the target center in the latest 
-                    // frame.
-                    if (scalarProjection > flight.Length || scalarProjection < 0)
-                    {
-                        // Compute the new closest approach
-                        double distance = (target - ball).Length;
-                        if (ball.Y < target.Y)
-                            distance *= -1;
-                        if (Math.Abs(distance) < Math.Abs(closestApproach))
-                            closestApproach = distance;
-
-
-                        if ((ball - target).Length < settings.TargetValidDiameter / 2.0)
+                        this.presenter.Trajectory.Clear();
+                        foreach (var trajectoryLink in result.Links)
                         {
-                            mode = GameMode.Terminal;
-                            outcome = "hit";
+                            this.presenter.Trajectory.Add(trajectoryLink);
                         }
-                    }
+                    }), null);
 
-                    // If the scalar projection is between zero and one then it means the flight
-                    // vector includes the closest distance to the target. We can then check and
-                    // see if the closest point of approach was within the target valid diameter.
-                    else
-                    {
-                        Vector closestPoint = scalarProjection * flight.Unit();
-
-                        // Compute the new closest approach
-                        double distance = (target - closestPoint).Length;
-                        if (ball.Y < target.Y)
-                            distance *= -1;
-                        if (Math.Abs(distance) < Math.Abs(closestApproach))
-                            closestApproach = distance;
-
-                        if ((targetRelative - closestPoint).Length < settings.TargetValidDiameter / 2.0)
-                        {
-                            mode = GameMode.Terminal;
-                            ball = closestPoint + lastBall;
-                            outcome = "hit";
-                        }
-                    }
-
-                    
-                    // Set the last position for the ball to now be equal to the current
-                    // ball position.
-                    lastBall = ball.Clone();
                 }
+                
 
                 /* The terminal phase of the flight is a single sub-frame time window in which
                  * the program can clean up any one-time operations that need to happen after
@@ -635,6 +482,8 @@ namespace Voice_Game
 
             // Start the pitch detection engine
             DetectionEngine();
+
+            this.mainContext = SynchronizationContext.Current;
 
             // Initialize the engine thread
             Thread gameThread = new Thread(GameLoop);

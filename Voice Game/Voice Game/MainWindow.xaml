@@ -124,14 +124,25 @@
                             <TranslateTransform X="-5" Y="-5" />
                         </Ellipse.RenderTransform>
                     </Ellipse>
-                    <Line X1="{Binding Ball.X}"
-                      X2="{Binding Anchor.X}"
-                      Y1="{Binding Ball.Y}"
-                      Y2="{Binding Anchor.Y}"
-                      Stroke="Black"
-                      StrokeThickness="2"
-                      Visibility="{Binding AnchorVisibility}"
-                      />
+
+                    <!-- Trajectory -->
+                    <ItemsControl ItemsSource="{Binding Trajectory}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Line X1="{Binding X1}"
+                                      X2="{Binding X2}"
+                                      Y1="{Binding Y1}"
+                                      Y2="{Binding Y2}" 
+                                      Stroke="Black"
+                                      StrokeThickness="1"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </Canvas>
             </Viewbox>
             <StackPanel Orientation="Horizontal">

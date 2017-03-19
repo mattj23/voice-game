@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,6 +30,8 @@ namespace Voice_Game
         private double _decibels;
         private double _semitone;
         private string _subjectId;
+
+        public ObservableCollection<TrajectoryLink> Trajectory { get; set; }
 
         public Visibility AnchorVisibility
         {
@@ -155,6 +158,8 @@ namespace Voice_Game
         public ApplicationPresenter(MainWindow view)
         {
             View = view;
+
+            this.Trajectory = new ObservableCollection<TrajectoryLink>();
 
             // Load the settings
             string settingsFile = "settings.json";
