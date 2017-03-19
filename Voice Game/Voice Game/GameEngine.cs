@@ -128,6 +128,114 @@ namespace Voice_Game
         }
 
 
+        TrajectoryResult ComputeTrajectory(double releaseAngle, double releaseStretch)
+        {
+            double dt = (1000 / 60.0) - 1;
+            var start = anchor.Clone();
+            
+            // Set the ball starting position
+            ball = anchor.Clone();
+
+            // Prepare the initial velocity
+            velocity = releaseStretch* new Vector(1, 0, 0);
+            velocity = velocity.RotateAboutZ(releaseAngle * Math.PI / 180.0);
+
+            // Intialize the closest point of approach
+            double distance = (target - ball).Length;
+            if (ball.Y < target.Y)
+                distance *= -1;
+            double closestApproach = distance;
+
+            var lastBall = ball.Clone();
+            velocity.Y += (settings.Gravity * (dt / 20.0));
+            ball = ball + (dt * velocity);
+
+            TrajectoryResult result = new TrajectoryResult
+            {
+                IsHittingTarget = false,
+                Links = new List<TrajectoryLink> { new TrajectoryLink { X1 = lastBall.X, X2 = ball.X, Y1 = lastBall.Y, Y2 = ball.Y}}
+            };
+
+            // Simulation loop
+            while (true)
+            {
+                // Check if we've collided with the obstacle
+                if (ball.X > settings.Obstacle.Position &&
+                    ball.X < settings.Obstacle.Position + 30 &&
+                    ball.Y > settings.Obstacle.Bottom &&
+                    ball.Y < settings.Obstacle.Top)
+                {
+                    result.IsHittingTarget = false;
+                    break;
+                }
+
+                // Check if we've gone off screen (miss)
+                if (ball.X > settings.FieldWidth || ball.X < 0 || ball.Y > 15000 || ball.Y < 20)
+                {
+                    result.IsHittingTarget = false;
+                    break;
+                }
+
+                // Check if we've passed through the target by checking to see how far the 
+                // target is from the line segment between the last ball position and the 
+                // current ball position.
+                Vector flight = ball - lastBall;
+                Vector targetRelative = target - lastBall;
+                double scalarProjection = Vector.Dot(flight.Unit(), targetRelative);
+
+                // If the scalar projection is less than zero or greater than one, the  
+                // projection on to the flight vector does not lie on the segment between
+                // the two flight positions. Thus we can simply check to see if the ball is 
+                // within the valid target distance from the target center in the latest 
+                // frame.
+                if (scalarProjection > flight.Length || scalarProjection < 0)
+                {
+                    // Compute the new closest approach
+                    distance = (target - ball).Length;
+                    if (ball.Y < target.Y)
+                        distance *= -1;
+                    if (Math.Abs(distance) < Math.Abs(closestApproach))
+                        closestApproach = distance;
+
+
+                    if ((ball - target).Length < settings.TargetValidDiameter / 2.0)
+                    {
+                        result.IsHittingTarget = true;
+                        break;
+                    }
+                }
+
+                // If the scalar projection is between zero and one then it means the flight
+                // vector includes the closest distance to the target. We can then check and
+                // see if the closest point of approach was within the target valid diameter.
+                else
+                {
+                    Vector closestPoint = scalarProjection * flight.Unit();
+
+                    // Compute the new closest approach
+                    distance = (target - closestPoint).Length;
+                    if (ball.Y < target.Y)
+                        distance *= -1;
+                    if (Math.Abs(distance) < Math.Abs(closestApproach))
+                        closestApproach = distance;
+
+                    if ((targetRelative - closestPoint).Length < settings.TargetValidDiameter / 2.0)
+                    {
+                        ball = closestPoint + lastBall;
+                        result.IsHittingTarget = true;
+                        break;
+                    }
+                }
+
+                result.Links.Add(new TrajectoryLink { X1 = lastBall.X, X2 = ball.X, Y1 = lastBall.Y, Y2 = ball.Y });
+                // Set the last position for the ball to now be equal to the current
+                // ball position.
+                lastBall = ball.Clone();
+            }
+
+            return result;
+        }
+
         private void GameLoop()
         {
             double dt = (1000 / 60.0) - 1;
