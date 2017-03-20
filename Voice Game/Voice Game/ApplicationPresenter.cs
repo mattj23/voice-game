@@ -91,6 +91,17 @@ namespace Voice_Game
                 OnPropertyChanged("DecibelLabel");
             }
         }
+
+        public int Score
+        {
+            get { return _score; }
+            set
+            {
+                _score = value; 
+                OnPropertyChanged("Score");
+            }
+        }
+
         public string FrequencyLabel
         {
             get 
@@ -134,6 +145,7 @@ namespace Voice_Game
 
         // Settings object
         private Settings _settings;
+        private int _score;
 
         public Settings Settings
         {

@@ -6,5 +6,7 @@ namespace Voice_Game
     {
         public IList<TrajectoryLink> Links { get; set; }
         public bool IsHittingTarget { get; set; }
+
+        public double ClosestApproach { get; set; }
     }
 }

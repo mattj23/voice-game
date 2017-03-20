@@ -59,7 +59,7 @@ namespace Voice_Game
 
         // Voice trace
         private int limboFrameCount = 0;
-        List<Tuple<long, double, double>> trace = new List<Tuple<long, double, double>>();
+        List<Tuple<long, double, double, double>> trace = new List<Tuple<long, double, double, double>>();
 
         // Simulation Mode
         GameMode mode;
@@ -104,7 +104,7 @@ namespace Voice_Game
             {
                 // The given frequency is turned into a fraction which will range from -1 to +1 based 
                 // on the PitchSpan setting parameter.
-                fraction = (frequency - pitchReference) / settings.PitchSpan;
+                fraction = (frequency - settings.PitchMinimum) / settings.PitchSpan;
             }
             
             // Set limits on the fraction
@@ -236,7 +236,7 @@ namespace Voice_Game
                 // ball position.
                 lastBall = ball.Clone();
             }
-
+            result.ClosestApproach = closestApproach;
             return result;
         }
 
@@ -289,6 +289,7 @@ namespace Voice_Game
                     else
                         presenter.Frequency = 0;
                     presenter.Decibels = Decibels;
+                    presenter.Score = 0;
 
                     // If the StartMethod is 1 (volume detection) we will trigger the startAiming flag
                     // if the decibels exceeed the volume minimum, and the next run through the loop the
@@ -319,7 +320,7 @@ namespace Voice_Game
                         else
                             volumeReference = Decibels;
                         
-                        trace = new List<Tuple<long, double, double>>();
+                        trace = new List<Tuple<long, double, double, double>>();
                         traceClock.Reset();
                         traceClock.Start();
                     }
@@ -333,28 +334,38 @@ namespace Voice_Game
                     
                     // Update the pitch and volume data
                     if (Decibels > settings.VolumeMinimum)
-                        presenter.Frequency = Frequency;
-                    presenter.Decibels = Decibels;
-                    
-                    // Store the trace
-                    trace.Add(new Tuple<long,double,double>(traceClock.ElapsedMilliseconds, Frequency, Decibels));
-
-                    // Make sure the anchor and stretching band are visible
-                    presenter.IsAnchorVisible = true;
-
-                    var result = ComputeTrajectory(angle, stretch);
-
-                    // Post the copying of the trajectory on the main thread.  This should be fast, all it's doing 
-                    // is copying a bunch of references to an observable collection.
-                    this.mainContext.Post(new SendOrPostCallback(o =>
                     {
-                        this.presenter.Trajectory.Clear();
-                        foreach (var trajectoryLink in result.Links)
-                        {
-                            this.presenter.Trajectory.Add(trajectoryLink);
-                        }
-                    }), null);
+                        presenter.Frequency = Frequency;
+                        presenter.Decibels = Decibels;
 
+                        
+                        // Make sure the anchor and stretching band are visible
+                        presenter.IsAnchorVisible = true;
+
+                        var result = ComputeTrajectory(angle, stretch);
+
+                        // Store the trace
+                        trace.Add(new Tuple<long, double, double, double>(traceClock.ElapsedMilliseconds, Frequency, Decibels, result.ClosestApproach));
+
+                        if (result.IsHittingTarget)
+                            this.presenter.Score += 1;
+
+                        // Post the copying of the trajectory on the main thread.  This should be fast, all it's doing 
+                        // is copying a bunch of references to an observable collection.
+                        this.mainContext.Post(new SendOrPostCallback(o =>
+                        {
+                            this.presenter.Trajectory.Clear();
+                            foreach (var trajectoryLink in result.Links)
+                            {
+                                this.presenter.Trajectory.Add(trajectoryLink);
+                            }
+                        }), null);
+                    }
+                    else
+                    {
+                        this.mode = GameMode.Terminal;
+                    }
+                    
                 }
                 
 
@@ -366,15 +377,7 @@ namespace Voice_Game
                  * to something other than Terminal to prevent this block from being run again. */
                 if (mode == GameMode.Terminal)
                 {
-                    if (SimulationMode)
-                    {
-                        cpaOutput = closestApproach;
-                        outcomeOutput = outcome;
-                        isRunning = false;
-                        return;
-                    }
-
-
+                    
                     mode = GameMode.StandBy;
                     
                     // Serialze the settins data for the trace which is to be written
@@ -390,19 +393,12 @@ namespace Voice_Game
                     output.Add("    \"test_id\":\"" + Guid.NewGuid().ToString() + "\",");
                     output.Add("    \"subject\":\"" + presenter.SubjectId + "\",");
                     output.Add("    \"timestamp\":\"" + string.Format("{0:HH:mm:ss}, {0:yyyy-MM-dd}", DateTime.Now) + "\",");
-                    output.Add("    \"release_time\":" + releaseTime.ToString() + ",");
-                    output.Add("    \"release_pitch\":" + releasePitch.ToString() + ",");
-                    output.Add("    \"release_volume\":" + releaseVolume.ToString() + ",");
-                    output.Add("    \"release_angle\":" + releaseAngle.ToString() + ",");
-                    output.Add("    \"release_stretch\":" + releaseStretch.ToString() + ",");
-                    output.Add("    \"starting_pitch\":" + pitchReference.ToString() + ",");
-                    output.Add("    \"starting_volume\":" + volumeReference.ToString() + ",");
-                    output.Add("    \"closest_approach\":" + closestApproach.ToString() + ",");
-                    output.Add("    \"outcome\":\"" + outcome + "\",");
+                    output.Add("    \"score\":\"" + this.presenter.Score + "\",");
 
                     List<string> traceOutput = new List<string>();
                     for (int i = 0; i < trace.Count(); ++i)
-                        traceOutput.Add(string.Format("        [{0}, {1}, {2}]", trace[i].Item1, trace[i].Item2, trace[i].Item3));
+                        traceOutput.Add(
+                            $"        [{trace[i].Item1}, {trace[i].Item2}, {trace[i].Item3}, {trace[i].Item4}]");
                     output.Add("    \"trace\":[");
                     output.Add(string.Join(",\n", traceOutput));
                     output.Add("    ],");
@@ -412,7 +408,7 @@ namespace Voice_Game
 
                     string filename = string.Format("Test {0:yyyy-MM-dd_HH-mm-ss}.json", DateTime.Now);
                     File.WriteAllLines(filename, output);
-                    trace = new List<Tuple<long, double, double>>();
+                    trace = new List<Tuple<long, double, double, double>>();
 
 
                     // If there is an object subscribed to the new trial event, we fire it now

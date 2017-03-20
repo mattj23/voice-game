@@ -157,6 +157,11 @@
                            Margin="0 5"
                            Text="trials"/>
             </StackPanel>
+            
+            <TextBlock HorizontalAlignment="Right"
+                       FontSize="16"
+                       FontWeight="Black"
+                       Text="{Binding Score}"></TextBlock>
         </Grid>
         
         <Grid x:Name="InputBox"
